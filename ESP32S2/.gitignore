@@ -3,4 +3,5 @@
 .piolibdeps
 .vscode
 managed_components
+arduino_tinyusb
 /secrets.ini
