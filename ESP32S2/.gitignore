@@ -1,0 +1,6 @@
+.pio
+.pioenvs
+.piolibdeps
+.vscode
+managed_components
+/secrets.ini
