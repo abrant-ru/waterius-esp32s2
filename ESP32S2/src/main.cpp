@@ -66,9 +66,10 @@ void setup()
             b = !b;
         }
 
-    //LOG_BEGIN(115200); // Включаем логгирование на пине TX, 115200 8N1
-    //LOG_INFO(F("Booted"));
-    //LOG_INFO(F("Build: ") << __DATE__ << F(" ") << __TIME__);
+	USBSerial.begin(115200);
+	Serial0.begin(115200);
+    LOG_INFO(F("Booted"));
+    LOG_INFO(F("Build: ") << __DATE__ << F(" ") << __TIME__);
 
     esp_sleep_wakeup_cause_t cause = esp_sleep_get_wakeup_cause();
     if (cause == ESP_SLEEP_WAKEUP_ULP) {
@@ -76,12 +77,6 @@ void setup()
         //printf("ULP wakeup, event: %s\n", event_text[ulp_wake_up_event]);
         //ulp_wake_up_event = 0;
     } else {
-        int i = 20;
-        while (i--) {
-            vTaskDelay(1000 / portTICK_PERIOD_MS);
-            gpio_set_level(LED_STATE, b);
-            b = !b;
-        }
         printf("Initializing ULP");
         initialize_rtc_pins();
         init_ulp_program();
@@ -108,6 +103,8 @@ void loop()
             //vTaskDelay(100 / portTICK_PERIOD_MS);
             gpio_set_level(LED_S2, b);
             b = !b;
+			USBSerial.print("test usb\n");
+			Serial0.print("test com0\n");
         }
 
 

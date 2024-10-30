@@ -153,6 +153,7 @@ void initialize_usb_serial(void)
         .device_descriptor = NULL,
         .string_descriptor = NULL,
         .external_phy = false,
+		.configuration_descriptor = NULL, // Use default configuration descriptor according to settings in Menuconfig
     };
     if (tinyusb_driver_install(&tusb_cfg) == ESP_OK) {
 

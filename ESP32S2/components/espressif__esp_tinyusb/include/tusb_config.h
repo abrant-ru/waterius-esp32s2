@@ -115,6 +115,7 @@ extern "C" {
 #ifndef CFG_TUD_ENDPOINT0_SIZE
 #define CFG_TUD_ENDPOINT0_SIZE      64
 #endif
+#define CFG_TUD_ENDOINT0_SIZE		CFG_TUD_ENDPOINT0_SIZE
 
 // Debug Level
 #define CFG_TUSB_DEBUG              CONFIG_TINYUSB_DEBUG_LEVEL

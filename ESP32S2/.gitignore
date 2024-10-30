@@ -2,6 +2,7 @@
 .pioenvs
 .piolibdeps
 .vscode
-managed_components
-arduino_tinyusb
+/managed_components
+/arduino_tinyusb
+/build
 /secrets.ini

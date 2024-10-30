@@ -118,7 +118,8 @@ bool init_config(Settings &sett)
 #endif
 
     LOG_INFO(F("Generate waterius key"));
-    generateSha256Token(sett.waterius_key, WATERIUS_KEY_LEN, sett.waterius_email);
+    //generateSha256Token(sett.waterius_key, WATERIUS_KEY_LEN, sett.waterius_email);
+	strncpy0(sett.waterius_key, "4e8212f9711d9759baa829c10ccftu6c7", 34);
     LOG_INFO(F("waterius key=") << sett.waterius_key);
 
 #ifdef WIFI_SSID

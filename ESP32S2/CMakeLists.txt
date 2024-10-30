@@ -13,6 +13,7 @@ endif()
 
 # Adds necessary definitions for compiling it using Serial symbol attached to the HW USB CDC port
 list(APPEND compile_definitions "CONFIG_AUTOSTART_ARDUINO=1")
+
 list(APPEND compile_definitions "CONFIG_TINYUSB_ENABLED=1")
 list(APPEND compile_definitions "CONFIG_TINYUSB_CDC_ENABLED=1")
 list(APPEND compile_definitions "CONFIG_USB_ENABLED=1")
@@ -23,7 +24,7 @@ list(APPEND compile_definitions "CONFIG_USB_CDC_ENABLED=1")
 list(APPEND compile_definitions "CFG_TUSB_MCU=OPT_MCU_ESP32S2")
 list(APPEND compile_definitions "CFG_TUSB_OS_INC_PATH=freertos/")
 
-list(APPEND compile_definitions "ARDUINO_USB_CDC_ON_BOOT=0")
+list(APPEND compile_definitions "ARDUINO_USB_CDC_ON_BOOT=1")
 list(APPEND compile_definitions "ARDUINO_USB_MODE=0")
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
@@ -44,7 +45,7 @@ include_directories(components/espressif__tinyusb/src/typec)
 list(APPEND EXTRA_COMPONENT_DIRS components/espressif__esp_tinyusb)
 include_directories(components/espressif__esp_tinyusb)
 include_directories(components/espressif__esp_tinyusb/include)
-include_directories(components/espressif__esp_tinyusb/include_private)
+#include_directories(components/espressif__esp_tinyusb/include_private)
 
 #list(APPEND EXTRA_COMPONENT_DIRS esp32-arduino-lib-builder)
 
