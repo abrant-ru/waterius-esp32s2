@@ -14,7 +14,7 @@ extern const uint8_t ulp_main_bin_end[]   asm("_binary_ulp_main_bin_end");
 ulp_event_t get_wakeup_event(void)
 {
     esp_sleep_wakeup_cause_t cause = esp_sleep_get_wakeup_cause();
-    LOG_INFO(F("Startup ") << cause);    
+    LOG_INFO(F("Startup, cause ") << cause);    
 
     ulp_event_t event = ulp_event_t::NONE;
     if (cause == ESP_SLEEP_WAKEUP_ULP) {
@@ -37,6 +37,8 @@ void deep_sleep(void)
 //=====================================================================================
 void initialize_pins(void)
 {
+    LOG_INFO(F("Initializing pins"));
+
     gpio_set_direction(LED_S2, GPIO_MODE_OUTPUT);
     gpio_set_direction(LED_STATE, GPIO_MODE_OUTPUT);
     gpio_set_direction(BATT_VOL, GPIO_MODE_INPUT);
@@ -50,6 +52,8 @@ void initialize_pins(void)
 //=====================================================================================
 void initialize_rtc_pins(void)
 {
+    LOG_INFO(F("Initializing RTC pins"));
+
 	// ULP_BUTTON_IO: input, pull-up
     rtc_gpio_init((gpio_num_t)ULP_BUTTON_IO);
     rtc_gpio_set_direction((gpio_num_t)ULP_BUTTON_IO, RTC_GPIO_MODE_INPUT_ONLY);
@@ -134,7 +138,7 @@ void init_ulp_program(void)
     ulp_wake_up_period = 120 * ULP_WAKEUP_PERIOD_SEC;
 
     ulp_ch0_type = 1;
-    ulp_ch1_type = 2;
+    ulp_ch1_type = 1;
 	ulp_use_led = 1;
 	ulp_use_out = 1;
 

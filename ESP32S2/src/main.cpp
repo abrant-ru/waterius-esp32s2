@@ -103,7 +103,8 @@ void loop()
             b = !b;
             ulp_data_t data;
             ulp_read(data);
-            LOG_INFO(F("wake ") << data.wake_up_counter << F("/") << data.wake_up_period << F(", battery ") << data.battery_adc_value << F(", usb ") << usb_power_en);
+            bool usb_connected = USBSerial;
+            LOG_INFO(F("wake ") << data.wake_up_counter << F("/") << data.wake_up_period << F(", battery ") << data.battery_adc_value << F(", usb ") << usb_connected);
         }
     deep_sleep();
 

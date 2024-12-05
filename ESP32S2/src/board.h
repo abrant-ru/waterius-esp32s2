@@ -16,6 +16,11 @@
 #define BATT_VOL_ADC	ADC_CHANNEL_8
 #define BATT_EN			GPIO_NUM_12
 
+enum class power_t {
+    BATTERY         = 0,
+    USB             = 1,
+};
+
 enum class ulp_event_t {
     NONE            = 0,
     TIME            = 1,
@@ -27,6 +32,12 @@ struct ulp_config_t {
     bool            use_led;
     bool            use_out;
     uint            debounce_max_count;
+};
+
+enum class ulp_channel_type_t {
+    DISABLED        = 0,
+    DISCRETE        = 1,
+    ANALOG          = 2,
 };
 
 struct ulp_channel_t {

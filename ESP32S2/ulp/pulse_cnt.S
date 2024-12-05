@@ -223,11 +223,11 @@ ch0_edge_negative:
 	jumpr ch0_edge_increment, 0, EQ		// Jump if R0==0
 	
 	// Set GPIO pin ULP_CH0_LED
-	//WRITE_RTC_REG(RTC_CNTL_PAD_HOLD_REG, ULP_CH0_LED, 1, 0)
-	//WRITE_RTC_FIELD(RTC_IO_TOUCH_PAD0_REG + ULP_CH0_LED*4, RTC_IO_TOUCH_PAD0_MUX_SEL, 1)
-	//WRITE_RTC_REG(RTC_GPIO_ENABLE_W1TS_REG, RTC_GPIO_ENABLE_W1TS_S + ULP_CH0_LED, 1, 1)
-	//WRITE_RTC_REG(RTC_GPIO_OUT_W1TS_REG, RTC_GPIO_OUT_DATA_W1TS_S + ULP_CH0_LED, 1, 1)
-	//WRITE_RTC_REG(RTC_CNTL_PAD_HOLD_REG, ULP_CH0_LED, 1, 1)
+	WRITE_RTC_REG(RTC_CNTL_PAD_HOLD_REG, ULP_CH0_LED, 1, 0)
+	WRITE_RTC_FIELD(RTC_IO_TOUCH_PAD0_REG + ULP_CH0_LED*4, RTC_IO_TOUCH_PAD0_MUX_SEL, 1)
+	WRITE_RTC_REG(RTC_GPIO_ENABLE_W1TS_REG, RTC_GPIO_ENABLE_W1TS_S + ULP_CH0_LED, 1, 1)
+	WRITE_RTC_REG(RTC_GPIO_OUT_W1TS_REG, RTC_GPIO_OUT_DATA_W1TS_S + ULP_CH0_LED, 1, 1)
+	WRITE_RTC_REG(RTC_CNTL_PAD_HOLD_REG, ULP_CH0_LED, 1, 1)
 
 ch0_edge_out:
 	// Check use_out
@@ -236,11 +236,11 @@ ch0_edge_out:
 	jumpr ch0_edge_increment, 0, EQ		// Jump if R0==0
 	
 	// Set GPIO pin ULP_CH0_OUT
-	//WRITE_RTC_REG(RTC_CNTL_PAD_HOLD_REG, ULP_CH0_OUT, 1, 0)
-	//WRITE_RTC_FIELD(RTC_IO_TOUCH_PAD0_REG + ULP_CH0_OUT*4, RTC_IO_TOUCH_PAD0_MUX_SEL, 1)
-	//WRITE_RTC_REG(RTC_GPIO_ENABLE_W1TS_REG, RTC_GPIO_ENABLE_W1TS_S + ULP_CH0_OUT, 1, 1)
-	//WRITE_RTC_REG(RTC_GPIO_OUT_W1TS_REG, RTC_GPIO_OUT_DATA_W1TS_S + ULP_CH0_OUT, 1, 1)
-	//WRITE_RTC_REG(RTC_CNTL_PAD_HOLD_REG, ULP_CH0_OUT, 1, 1)
+	WRITE_RTC_REG(RTC_CNTL_PAD_HOLD_REG, ULP_CH0_OUT, 1, 0)
+	WRITE_RTC_FIELD(RTC_IO_TOUCH_PAD0_REG + ULP_CH0_OUT*4, RTC_IO_TOUCH_PAD0_MUX_SEL, 1)
+	WRITE_RTC_REG(RTC_GPIO_ENABLE_W1TS_REG, RTC_GPIO_ENABLE_W1TS_S + ULP_CH0_OUT, 1, 1)
+	WRITE_RTC_REG(RTC_GPIO_OUT_W1TS_REG, RTC_GPIO_OUT_DATA_W1TS_S + ULP_CH0_OUT, 1, 1)
+	WRITE_RTC_REG(RTC_CNTL_PAD_HOLD_REG, ULP_CH0_OUT, 1, 1)
 
 ch0_edge_increment:
 	// Increment pulse count
@@ -254,7 +254,7 @@ ch0_edge_increment:
 	ld r0, r0, 0						// R0 = ch0_type
 	jumpr ch0_end, 2, EQ				// Jump if R0==2
 
-	adc r1, 0, ch0_adc + 1				// measure gpio pin voltage
+	//adc r1, 0, ch0_adc + 1				// measure gpio pin voltage
 	move r2, ch0_adc_value				// R2 = @ch0_adc_value
 	st r1, r2, 0						// ch0_adc_value = R2
 
@@ -402,7 +402,7 @@ ch1_edge_increment:
 	ld r0, r0, 0						// R0 = ch1_type
 	jumpr ch1_end, 2, EQ				// Jump if R0==2
 
-	adc r1, 0, ch1_adc + 1				// measure gpio pin voltage
+	//adc r1, 0, ch1_adc + 1				// measure gpio pin voltage
 	move r2, ch1_adc_value				// R2 = @ch1_adc_value
 	st r1, r2, 0						// ch1_adc_value = R2
 
