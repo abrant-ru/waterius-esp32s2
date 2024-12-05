@@ -16,7 +16,38 @@
 #define BATT_VOL_ADC	ADC_CHANNEL_8
 #define BATT_EN			GPIO_NUM_12
 
+enum class ulp_event_t {
+    NONE            = 0,
+    TIME            = 1,
+    BUTTON          = 2,
+    USB             = 3,
+};
+
+struct ulp_config_t {
+    bool            use_led;
+    bool            use_out;
+    uint            debounce_max_count;
+};
+
+struct ulp_channel_t {
+    uint16_t        type;
+    uint16_t        pulse_count;
+    uint            adc_value;
+};
+
+struct ulp_data_t {
+    ulp_config_t    config;
+    ulp_channel_t   ch0;
+    ulp_channel_t   ch1;
+    uint            battery_adc_value;
+    uint            wake_up_counter;
+    uint            wake_up_period;
+};
+
+ulp_event_t get_wakeup_event(void);
+void deep_sleep(void);
 void initialize_pins(void);
 void initialize_rtc_pins(void);
 void init_ulp_program(void);
-void initialize_usb_serial(void);
+void ulp_read(ulp_data_t &data);
+

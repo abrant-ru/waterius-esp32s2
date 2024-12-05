@@ -3,15 +3,36 @@
 #include "esp32s2/ulp.h"
 #include "esp_sleep.h"
 //#include "esp32/ulp_adc.h"
+#include "Logging.h"
 #include "ulp_main.h"
 #include "../ulp/ulp_config.h"
 
-#include "tinyusb.h"
-#include "tusb_cdc_acm.h"
-#include "tusb_console.h"
-
 extern const uint8_t ulp_main_bin_start[] asm("_binary_ulp_main_bin_start");
 extern const uint8_t ulp_main_bin_end[]   asm("_binary_ulp_main_bin_end");
+
+//=====================================================================================
+ulp_event_t get_wakeup_event(void)
+{
+    esp_sleep_wakeup_cause_t cause = esp_sleep_get_wakeup_cause();
+    LOG_INFO(F("Startup ") << cause);    
+
+    ulp_event_t event = ulp_event_t::NONE;
+    if (cause == ESP_SLEEP_WAKEUP_ULP) {
+        event = (ulp_event_t)ulp_wake_up_event;
+    }
+    ulp_wake_up_event = 0;
+    return event;
+}
+
+//=====================================================================================
+void deep_sleep(void)
+{
+    LOG_INFO(F("Entering deep sleep"));    
+	ESP_ERROR_CHECK( esp_sleep_enable_ulp_wakeup() );
+    esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_ON);
+    delay(100);
+    esp_deep_sleep_start();    
+}
 
 //=====================================================================================
 void initialize_pins(void)
@@ -97,7 +118,7 @@ void init_ulp_program(void)
     // Load binary
     esp_err_t err = ulp_load_binary(0, ulp_main_bin_start,
             (ulp_main_bin_end - ulp_main_bin_start) / sizeof(uint32_t));
-    //ESP_ERROR_CHECK(err);
+    ESP_ERROR_CHECK(err);
 
     /* Initialize some variables used by ULP program.
      * Each 'ulp_xyz' variable corresponds to 'xyz' variable in the ULP program.
@@ -108,13 +129,14 @@ void init_ulp_program(void)
      *
      * Note that the ULP reads only the lower 16 bits of these variables.
      */
-    /*ulp_wake_up_counter = 0;
+    
+    ulp_wake_up_counter = 0;
     ulp_wake_up_period = 120 * ULP_WAKEUP_PERIOD_SEC;
 
     ulp_ch0_type = 1;
     ulp_ch1_type = 2;
 	ulp_use_led = 1;
-	ulp_use_out = 1;*/
+	ulp_use_out = 1;
 
 	// Init ADC, 13 bit, voltage divider set to 2 times
     /*ulp_adc_cfg_t cfg_1 = {
@@ -142,32 +164,26 @@ void init_ulp_program(void)
     ulp_set_wakeup_period(0, ULP_WAKEUP_PERIOD);
 
     // Start the program
-    //err = ulp_run(&ulp_entry - RTC_SLOW_MEM);
-    //ESP_ERROR_CHECK(err);
+    err = ulp_run(&ulp_entry - RTC_SLOW_MEM);
+    ESP_ERROR_CHECK(err);
 }
 
 //=====================================================================================
-void initialize_usb_serial(void)
+void ulp_read(ulp_data_t &data)
 {
-    /*const tinyusb_config_t tusb_cfg = {
-        .device_descriptor = NULL,
-        .string_descriptor = NULL,
-        .external_phy = false,
-		.configuration_descriptor = NULL, // Use default configuration descriptor according to settings in Menuconfig
-    };
-    if (tinyusb_driver_install(&tusb_cfg) == ESP_OK) {
-
-        tinyusb_config_cdcacm_t acm_cfg = {
-            .usb_dev = TINYUSB_USBDEV_0,
-            .cdc_port = TINYUSB_CDC_ACM_0,
-            .rx_unread_buf_sz = 64,
-            .callback_rx = NULL,
-            .callback_rx_wanted_char = NULL,
-            .callback_line_state_changed = NULL,
-            .callback_line_coding_changed = NULL
-        }; 
-        tusb_cdc_acm_init(&acm_cfg);
-    }
+    data.config.use_led = ulp_use_led ? true : false;
+    data.config.use_out = ulp_use_out ? true : false;
+    data.config.debounce_max_count = ULP_BEBOUNCE_MAX_COUNT;
     
-    esp_tusb_init_console(TINYUSB_CDC_ACM_0);*/
+    data.ch0.type = ulp_ch0_type;
+    data.ch0.pulse_count = ulp_ch0_pulse_count;
+    data.ch0.adc_value = ulp_ch0_adc_value;
+
+    data.ch1.type = ulp_ch1_type;
+    data.ch1.pulse_count = ulp_ch1_pulse_count;
+    data.ch1.adc_value = ulp_ch1_adc_value;
+
+    data.battery_adc_value = ulp_battery_adc_value;
+    data.wake_up_counter = ulp_wake_up_counter;
+    data.wake_up_period = ulp_wake_up_period;
 }

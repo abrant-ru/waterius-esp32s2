@@ -6,10 +6,6 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <ArduinoJson.h>
-//#include "tusb_config.h"
-//#include <Adafruit_TinyUSB.h>
-//#include "tinyusb.h"
-//#include "tusb_cdc_acm.h"
 #include "Logging.h"
 #include "config.h"
 #include "master_i2c.h"
@@ -40,9 +36,9 @@ Ticker voltage_ticker;
 static bool usb_power_en = false;
 
 
-/*
-Выполняется однократно при включении
-*/
+//=====================================================================================
+// Выполняется однократно при включении
+//=====================================================================================
 
 void setup()
 {
@@ -51,62 +47,65 @@ void setup()
 	usb_power_en = !gpio_get_level(BATT_EN);
     gpio_set_level(LED_S2, 1);//usb_power_en);
 
-    bool b = true;
-    gpio_set_level(LED_STATE, b);
-
-    //initialize_usb_serial();
-    //printf("\nStartup %u\n", cause);    
-
-        int i = 20;
-        while (i--) {
-            delay(100);
-            //vTaskDelay(100 / portTICK_PERIOD_MS);
-            gpio_set_level(LED_S2, b);
-            gpio_set_level(LED_STATE, b);
-            b = !b;
-        }
-
-	USBSerial.begin(115200);
-	Serial0.begin(115200);
+    // Инициализация портов
+	USBSerial.begin(115200);        // Консоль приложения
+	Serial0.begin(115200);          // Системная консоль
     LOG_INFO(F("Booted"));
     LOG_INFO(F("Build: ") << __DATE__ << F(" ") << __TIME__);
 
-    esp_sleep_wakeup_cause_t cause = esp_sleep_get_wakeup_cause();
-    if (cause == ESP_SLEEP_WAKEUP_ULP) {
-        static const char event_text[][16] = { "None", "Time", "Button", "USB" };
-        //printf("ULP wakeup, event: %s\n", event_text[ulp_wake_up_event]);
-        //ulp_wake_up_event = 0;
-    } else {
-        printf("Initializing ULP");
+    bool b = true;
+    gpio_set_level(LED_STATE, b);
+
+    int i = 50;
+    while (i--) {
+        delay(100);
+        gpio_set_level(LED_S2, b);
+        gpio_set_level(LED_STATE, b);
+        b = !b;
+    }
+
+
+    // Определяем причину запуска
+    ulp_event_t ulp_event = get_wakeup_event();
+    if (ulp_event == ulp_event_t::NONE) {
+        // Обычный запуск
+        LOG_INFO(F("Initializing ULP"));
         initialize_rtc_pins();
         init_ulp_program();
-        i = 50;
-        while (i--) {
-            vTaskDelay(100 / portTICK_PERIOD_MS);
-            gpio_set_level(LED_STATE, b);
-            b = !b;
-        }
+    } else {
+        // Проснулись по сигналу от ULP
+        static const char event_text[][16] = { "None", "Time", "Button", "USB" };
+        LOG_INFO(F("ULP wakeup, event: ") << event_text[(uint)ulp_event]);
     }
 
     /*get_voltage()->begin();
     voltage_ticker.attach_ms(300, []()
                              { get_voltage()->update(); }); // через каждые 300 мс будет измеряться напряжение
         */                     
+    LOG_INFO(F("Initializing complete"));
 }
+
+//=====================================================================================
+// Выполняется в цикле после setup
+//=====================================================================================
 
 void loop()
 {
+    usb_power_en = !gpio_get_level(BATT_EN);
+    gpio_set_level(LED_S2, usb_power_en);
+
         bool b = 0;
         int i = 20;
         while (i--) {
+            usb_power_en = !gpio_get_level(BATT_EN);
             delay(1000);
-            //vTaskDelay(100 / portTICK_PERIOD_MS);
             gpio_set_level(LED_S2, b);
             b = !b;
-			USBSerial.print("test usb\n");
-			Serial0.print("test com0\n");
+            ulp_data_t data;
+            ulp_read(data);
+            LOG_INFO(F("wake ") << data.wake_up_counter << F("/") << data.wake_up_period << F(", battery ") << data.battery_adc_value << F(", usb ") << usb_power_en);
         }
-
+    deep_sleep();
 
     uint8_t mode = TRANSMIT_MODE; // TRANSMIT_MODE;
     bool config_loaded = false;
