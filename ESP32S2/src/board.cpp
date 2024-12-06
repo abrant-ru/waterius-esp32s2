@@ -1,8 +1,8 @@
 #include "board.h"
 
 #include "esp32s2/ulp.h"
+#include "ulp_adc.h"
 #include "esp_sleep.h"
-//#include "esp32/ulp_adc.h"
 #include "Logging.h"
 #include "ulp_main.h"
 #include "../ulp/ulp_config.h"
@@ -13,8 +13,9 @@ extern const uint8_t ulp_main_bin_end[]   asm("_binary_ulp_main_bin_end");
 //=====================================================================================
 ulp_event_t get_wakeup_event(void)
 {
+   	static const char wakeup_text[][16] = { "Undefined", "All", "Ext0", "Ext1", "Timer", "Touchpad", "ULP", "GPIO", "UART", "WiFi", "CoCPU int", "CoCPU crash", "BT" };
     esp_sleep_wakeup_cause_t cause = esp_sleep_get_wakeup_cause();
-    LOG_INFO(F("Startup, cause ") << cause);    
+    autoprint("Startup, cause %s\r\n", wakeup_text[cause]);    
 
     ulp_event_t event = ulp_event_t::NONE;
     if (cause == ESP_SLEEP_WAKEUP_ULP) {
@@ -27,7 +28,7 @@ ulp_event_t get_wakeup_event(void)
 //=====================================================================================
 void deep_sleep(void)
 {
-    LOG_INFO(F("Entering deep sleep"));    
+    autoprint("Entering deep sleep\r\n");    
 	ESP_ERROR_CHECK( esp_sleep_enable_ulp_wakeup() );
     esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_ON);
     delay(100);
@@ -37,7 +38,7 @@ void deep_sleep(void)
 //=====================================================================================
 void initialize_pins(void)
 {
-    LOG_INFO(F("Initializing pins"));
+    autoprint("Initializing pins\r\n");
 
     gpio_set_direction(LED_S2, GPIO_MODE_OUTPUT);
     gpio_set_direction(LED_STATE, GPIO_MODE_OUTPUT);
@@ -52,7 +53,7 @@ void initialize_pins(void)
 //=====================================================================================
 void initialize_rtc_pins(void)
 {
-    LOG_INFO(F("Initializing RTC pins"));
+    autoprint("Initializing RTC pins\r\n");
 
 	// ULP_BUTTON_IO: input, pull-up
     rtc_gpio_init((gpio_num_t)ULP_BUTTON_IO);
@@ -119,6 +120,7 @@ void initialize_rtc_pins(void)
 //=====================================================================================
 void init_ulp_program(void)
 {
+    autoprint("Initializing ULP\r\n");
     // Load binary
     esp_err_t err = ulp_load_binary(0, ulp_main_bin_start,
             (ulp_main_bin_end - ulp_main_bin_start) / sizeof(uint32_t));
@@ -143,14 +145,14 @@ void init_ulp_program(void)
 	ulp_use_out = 1;
 
 	// Init ADC, 13 bit, voltage divider set to 2 times
-    /*ulp_adc_cfg_t cfg_1 = {
+    ulp_adc_cfg_t cfg_1 = {
         .adc_n    = ADC_UNIT_1,
-        .channel  = ULP_BATTERY_ADC,
-        .width    = ADC_BITWIDTH_13,
+        .channel  = (adc_channel_t)ULP_BATTERY_ADC,
         .atten    = ULP_ADC_ATTEN,
+        .width    = ADC_BITWIDTH_13,
         .ulp_mode = ADC_ULP_MODE_FSM,
-    };*/
-    //ESP_ERROR_CHECK(ulp_adc_init(&cfg_1));
+    };
+    ESP_ERROR_CHECK(ulp_adc_init(&cfg_1));
 
 #if CONFIG_IDF_TARGET_ESP32
     /* Disconnect GPIO12 and GPIO15 to remove current drain through
@@ -173,21 +175,38 @@ void init_ulp_program(void)
 }
 
 //=====================================================================================
-void ulp_read(ulp_data_t &data)
+void board_read(board_data_t &data)
 {
     data.config.use_led = ulp_use_led ? true : false;
     data.config.use_out = ulp_use_out ? true : false;
     data.config.debounce_max_count = ULP_BEBOUNCE_MAX_COUNT;
     
-    data.ch0.type = ulp_ch0_type;
-    data.ch0.pulse_count = ulp_ch0_pulse_count;
-    data.ch0.adc_value = ulp_ch0_adc_value;
+    data.ch0.type = ulp_ch0_type & UINT16_MAX;
+    data.ch0.pulse_count = ulp_ch0_pulse_count & UINT16_MAX;
+    data.ch0.adc_value = ulp_ch0_adc_value & UINT16_MAX;
 
-    data.ch1.type = ulp_ch1_type;
-    data.ch1.pulse_count = ulp_ch1_pulse_count;
-    data.ch1.adc_value = ulp_ch1_adc_value;
+    data.ch1.type = ulp_ch1_type & UINT16_MAX;
+    data.ch1.pulse_count = ulp_ch1_pulse_count & UINT16_MAX;
+    data.ch1.adc_value = ulp_ch1_adc_value & UINT16_MAX;
 
-    data.battery_adc_value = ulp_battery_adc_value;
-    data.wake_up_counter = ulp_wake_up_counter;
-    data.wake_up_period = ulp_wake_up_period;
+	data.power = gpio_get_level(BATT_EN) ? power_t::Battery : power_t::USB;
+    data.usb_connected = USBSerial;
+    data.battery_voltage = ULP_ADC_VOLTAGE(ulp_battery_adc_value & UINT16_MAX);
+    data.wake_up_counter = ulp_wake_up_counter & UINT16_MAX;
+    data.wake_up_period = ulp_wake_up_period & UINT16_MAX;
+}
+
+//=====================================================================================
+size_t autoprint(const char *format, ...)
+{
+	va_list arg;
+	size_t result = 0;
+	va_start(arg, format);
+	bool usb_connected = USBSerial;
+	if (usb_connected) 		
+		result = USBSerial.vprintf(format, arg);
+	else
+		result = Serial0.vprintf(format, arg);
+  	va_end(arg);
+  	return result;
 }

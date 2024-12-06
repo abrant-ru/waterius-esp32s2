@@ -32,9 +32,9 @@ SlaveData data;       // Данные от Attiny85
 Settings sett;        // Настройки соединения и предыдущие показания из EEPROM
 CalculatedData cdata; // вычисляемые данные
 
-Ticker voltage_ticker;
-static bool usb_power_en = false;
+board_data_t board;
 
+Ticker voltage_ticker;
 
 //=====================================================================================
 // Выполняется однократно при включении
@@ -42,47 +42,34 @@ static bool usb_power_en = false;
 
 void setup()
 {
-	// Установка пинов
-	initialize_pins();
-	usb_power_en = !gpio_get_level(BATT_EN);
-    gpio_set_level(LED_S2, 1);//usb_power_en);
-
     // Инициализация портов
 	USBSerial.begin(115200);        // Консоль приложения
 	Serial0.begin(115200);          // Системная консоль
-    LOG_INFO(F("Booted"));
-    LOG_INFO(F("Build: ") << __DATE__ << F(" ") << __TIME__);
+    autoprint("Booted\r\n");
+    autoprint("Build: %s %s\r\n", __DATE__, __TIME__);
 
-    bool b = true;
-    gpio_set_level(LED_STATE, b);
-
-    int i = 50;
-    while (i--) {
-        delay(100);
-        gpio_set_level(LED_S2, b);
-        gpio_set_level(LED_STATE, b);
-        b = !b;
-    }
-
+	// Установка пинов
+	initialize_pins();
+    gpio_set_level(LED_S2, 1);
+    gpio_set_level(LED_STATE, 1);
 
     // Определяем причину запуска
     ulp_event_t ulp_event = get_wakeup_event();
     if (ulp_event == ulp_event_t::NONE) {
         // Обычный запуск
-        LOG_INFO(F("Initializing ULP"));
         initialize_rtc_pins();
         init_ulp_program();
     } else {
         // Проснулись по сигналу от ULP
         static const char event_text[][16] = { "None", "Time", "Button", "USB" };
-        LOG_INFO(F("ULP wakeup, event: ") << event_text[(uint)ulp_event]);
+        autoprint("ULP wakeup, event: %s\r\n", event_text[(uint)ulp_event]);
     }
 
     /*get_voltage()->begin();
     voltage_ticker.attach_ms(300, []()
                              { get_voltage()->update(); }); // через каждые 300 мс будет измеряться напряжение
         */                     
-    LOG_INFO(F("Initializing complete"));
+    autoprint("Initializing complete\r\n");
 }
 
 //=====================================================================================
@@ -91,22 +78,19 @@ void setup()
 
 void loop()
 {
-    usb_power_en = !gpio_get_level(BATT_EN);
-    gpio_set_level(LED_S2, usb_power_en);
+    gpio_set_level(LED_STATE, true);
 
-        bool b = 0;
-        int i = 20;
-        while (i--) {
-            usb_power_en = !gpio_get_level(BATT_EN);
-            delay(1000);
-            gpio_set_level(LED_S2, b);
-            b = !b;
-            ulp_data_t data;
-            ulp_read(data);
-            bool usb_connected = USBSerial;
-            LOG_INFO(F("wake ") << data.wake_up_counter << F("/") << data.wake_up_period << F(", battery ") << data.battery_adc_value << F(", usb ") << usb_connected);
-        }
-    deep_sleep();
+    int i = 20;
+    while (i--) {
+        delay(1000);
+        gpio_set_level(LED_S2, (board.power == power_t::USB));
+        board_read(board);
+     	static const char power_text[][16] = { "Battery", "USB" };
+      	static const char usb_text[][16] = { "not connected", "connected" };
+        autoprint("wake %u/%u, power %s, voltage %u, usb %s\r\n", board.wake_up_counter, board.wake_up_period, power_text[(uint)board.power], board.battery_voltage, usb_text[board.usb_connected]);
+    }
+	if (board.power == power_t::Battery)
+    	deep_sleep();
 
     uint8_t mode = TRANSMIT_MODE; // TRANSMIT_MODE;
     bool config_loaded = false;

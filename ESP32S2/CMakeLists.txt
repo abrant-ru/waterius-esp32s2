@@ -19,8 +19,6 @@ list(APPEND compile_definitions "CONFIG_TINYUSB_CDC_ENABLED=1")
 list(APPEND compile_definitions "CONFIG_USB_ENABLED=1")
 list(APPEND compile_definitions "CONFIG_USB_CDC_ENABLED=1")
 
-#list(APPEND compile_definitions "USE_TINYUSB")
-
 list(APPEND compile_definitions "CFG_TUSB_MCU=OPT_MCU_ESP32S2")
 list(APPEND compile_definitions "CFG_TUSB_OS_INC_PATH=freertos/")
 
@@ -28,12 +26,6 @@ list(APPEND compile_definitions "ARDUINO_USB_CDC_ON_BOOT=1")
 list(APPEND compile_definitions "ARDUINO_USB_MODE=0")
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-
-#list(APPEND EXTRA_COMPONENT_DIRS tinyusb)
-#list(APPEND EXTRA_COMPONENT_DIRS esp_tinyusb)
-
-#list(APPEND EXTRA_COMPONENT_DIRS arduino_tinyusb)
-#include_directories(arduino_tinyusb/tinyusb/src/class/cdc)
 
 list(APPEND EXTRA_COMPONENT_DIRS components/espressif__tinyusb)
 include_directories(components/espressif__tinyusb/src)
@@ -45,13 +37,5 @@ include_directories(components/espressif__tinyusb/src/typec)
 list(APPEND EXTRA_COMPONENT_DIRS components/espressif__esp_tinyusb)
 include_directories(components/espressif__esp_tinyusb)
 include_directories(components/espressif__esp_tinyusb/include)
-#include_directories(components/espressif__esp_tinyusb/include_private)
-
-#list(APPEND EXTRA_COMPONENT_DIRS esp32-arduino-lib-builder)
-
-#include_directories(managed_components/espressif__tinyusb/src)
-#include_directories($ENV{IDF_PATH}/components/freertos/FreeRTOS-Kernel/include/freertos)
-#include_directories(managed_components/espressif__tinyusb/src)
-#include_directories(esp_tinyusb/include)
 
 project(waterius-esp32)

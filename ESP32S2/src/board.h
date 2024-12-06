@@ -17,7 +17,7 @@
 #define BATT_EN			GPIO_NUM_12
 
 enum class power_t {
-    BATTERY         = 0,
+    Battery         = 0,
     USB             = 1,
 };
 
@@ -35,9 +35,9 @@ struct ulp_config_t {
 };
 
 enum class ulp_channel_type_t {
-    DISABLED        = 0,
-    DISCRETE        = 1,
-    ANALOG          = 2,
+    Disabled        = 0,
+    Discrete        = 1,
+    Analog          = 2,
 };
 
 struct ulp_channel_t {
@@ -46,11 +46,13 @@ struct ulp_channel_t {
     uint            adc_value;
 };
 
-struct ulp_data_t {
+struct board_data_t {
     ulp_config_t    config;
     ulp_channel_t   ch0;
     ulp_channel_t   ch1;
-    uint            battery_adc_value;
+	power_t			power;
+	bool			usb_connected;
+    uint            battery_voltage;
     uint            wake_up_counter;
     uint            wake_up_period;
 };
@@ -60,5 +62,6 @@ void deep_sleep(void);
 void initialize_pins(void);
 void initialize_rtc_pins(void);
 void init_ulp_program(void);
-void ulp_read(ulp_data_t &data);
+void board_read(board_data_t &data);
+size_t autoprint(const char *format, ...);
 

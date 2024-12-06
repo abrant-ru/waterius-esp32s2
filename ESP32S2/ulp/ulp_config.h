@@ -25,9 +25,9 @@
 #define ULP_BEBOUNCE_MAX_COUNT  3       // Value to which debounce_counter gets rese
 
 #define ULP_ADC_ATTEN			ADC_ATTEN_DB_6
-#define ULP_ADC_AREF			1950
-#define ULP_ADC_MAX				8191
-#define ULP_ADC_VOLTAGE(x)      (x * ULP_ADC_AREF / ULP_ADC_MAX)
+#define ULP_ADC_AREF			(1500 * 4)
+#define ULP_ADC_MAX				0x1FFF
+#define ULP_ADC_VOLTAGE(x)      ((x) * ULP_ADC_AREF / ULP_ADC_MAX)
 #define ULP_BATTERY_R_HIGH		470
 #define ULP_BATTERY_R_LOW		160
 #define ULP_BATTERY_RATIO       ((ULP_BATTERY_R_HIGH + ULP_BATTERY_R_LOW) / ULP_BATTERY_R_LOW)
