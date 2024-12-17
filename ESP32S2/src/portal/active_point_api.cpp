@@ -9,7 +9,7 @@
 
 #include "setup.h"
 #include "Logging.h"
-#include "master_i2c.h"
+#include "board.h"
 #include "utils.h"
 #include "config.h"
 #include "wifi_helpers.h"
@@ -20,9 +20,8 @@ extern bool start_connect_flag;
 extern wl_status_t wifi_connect_status;
 extern bool factory_reset_flag;
 
-SlaveData runtime_data;
+board_data_t runtime_data;
 extern SlaveData data;
-extern MasterI2C masterI2C;
 extern Settings sett;
 extern CalculatedData cdata;
 
@@ -265,7 +264,7 @@ void get_api_status(AsyncWebServerRequest *request, const int index)
     JsonObject ret = json_doc.to<JsonObject>();
 
     uint16_t factor;
-    if (masterI2C.getSlaveData(runtime_data))
+    if (runtime_data.read())
     {
         if (index == 0)
         {
@@ -273,7 +272,7 @@ void get_api_status(AsyncWebServerRequest *request, const int index)
             {
                 if (sett.factor1 == AUTO_IMPULSE_FACTOR)
                 {
-                    factor = get_auto_factor(runtime_data.impulses0, data.impulses0);
+                    factor = get_auto_factor(runtime_data.impulses0, board.impulses0);
                 }
                 else
                 {
@@ -512,26 +511,24 @@ void applyInputSettings(AsyncWebServerRequest *request, JsonObject &errorsObj, c
             switch (input) 
             {
                 case 0:
-                    if (!masterI2C.setCountersType(p->value().toInt(), runtime_data.counter_type1))
+                    if (!board.set_counter_type_0(p->value().toInt()))
                     {
                         LOG_ERROR(FPSTR(ERROR_ATTINY_ERROR) << ": " << p->name());
                         errorsObj[p->name()] = FPSTR(ERROR_ATTINY_ERROR);
                     }
                     else
                     {
-                        runtime_data.counter_type0 = p->value().toInt();
                         LOG_INFO(FPSTR(PARAM_SAVED0) << p->name() << F("=") << p->value());
                     }
                     break;
                 case 1:
-                    if (!masterI2C.setCountersType(runtime_data.counter_type0, p->value().toInt()))
+                    if (!board.set_counter_type_1(p->value().toInt()))
                     {
                         LOG_ERROR(FPSTR(ERROR_ATTINY_ERROR) << ": " << p->name());
                         errorsObj[p->name()] = FPSTR(ERROR_ATTINY_ERROR);
                     }
                     else
                     {
-                        runtime_data.counter_type1 = p->value().toInt();
                         LOG_INFO(FPSTR(PARAM_SAVED1) << p->name() << F("=") << p->value());
                     }
                     break;
@@ -718,7 +715,7 @@ void post_api_save_input_type(AsyncWebServerRequest *request)
     //applySettings(request, errorsObj); ? нужно ли тут
     applyInputSettings(request, errorsObj, input);
 
-    if (input == 0)
+/*    if (input == 0)
     {   
         if (runtime_data.counter_type0 == CounterType::HALL)
         {
@@ -747,7 +744,7 @@ void post_api_save_input_type(AsyncWebServerRequest *request)
         {
             ret[F("redirect")] = F("/input/1/detect.html");
         }
-    }
+    }*/
 
     bool wizard = find_wizard_param(request);
     if (wizard)

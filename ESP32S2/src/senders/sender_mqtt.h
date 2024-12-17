@@ -31,7 +31,7 @@
 #endif
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
-#include "master_i2c.h"
+#include "board.h"
 #include "Logging.h"
 #include "json.h"
 #include "ha/publish_data.h"

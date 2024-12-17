@@ -8,7 +8,6 @@
 #include <ArduinoJson.h>
 #include "Logging.h"
 #include "config.h"
-#include "master_i2c.h"
 #include "senders/sender_waterius.h"
 #include "senders/sender_http.h"
 #include "senders/sender_mqtt.h"
@@ -23,18 +22,10 @@
 #include "config.h"
 #include "board.h"
 
-/*#include "tinyusb.h"
-#include "tusb_cdc_acm.h"
-#include "tusb_console.h"*/
-
-MasterI2C masterI2C;  // Для общения с Attiny85 по i2c
 SlaveData data;       // Данные от Attiny85
 Settings sett;        // Настройки соединения и предыдущие показания из EEPROM
 CalculatedData cdata; // вычисляемые данные
-
-board_data_t board;
-
-Ticker voltage_ticker;
+bool config_loaded = false;
 
 //=====================================================================================
 // Выполняется однократно при включении
@@ -53,22 +44,21 @@ void setup()
     gpio_set_level(LED_S2, 1);
     gpio_set_level(LED_STATE, 1);
 
+	// Загружаем конфиг
+    config_loaded = load_config(sett);
+	if (config_loaded)
+    	autoprint("Config loaded\r\n");
+
     // Определяем причину запуска
-    ulp_event_t ulp_event = get_wakeup_event();
+    get_wakeup_event();
     if (ulp_event == ulp_event_t::NONE) {
         // Обычный запуск
         initialize_rtc_pins();
         init_ulp_program();
     } else {
         // Проснулись по сигналу от ULP
-        static const char event_text[][16] = { "None", "Time", "Button", "USB" };
-        autoprint("ULP wakeup, event: %s\r\n", event_text[(uint)ulp_event]);
     }
 
-    /*get_voltage()->begin();
-    voltage_ticker.attach_ms(300, []()
-                             { get_voltage()->update(); }); // через каждые 300 мс будет измеряться напряжение
-        */                     
     autoprint("Initializing complete\r\n");
 }
 
@@ -78,38 +68,33 @@ void setup()
 
 void loop()
 {
-    gpio_set_level(LED_STATE, true);
+	// Читаем данные
+    board.read();
+    gpio_set_level(LED_STATE, 1);
+    gpio_set_level(LED_S2, (board.power == power_t::USB));
 
-    int i = 20;
-    while (i--) {
-        delay(1000);
-        gpio_set_level(LED_S2, (board.power == power_t::USB));
-        board_read(board);
-     	static const char power_text[][16] = { "Battery", "USB" };
-      	static const char usb_text[][16] = { "not connected", "connected" };
-        autoprint("wake %u/%u, power %s, voltage %u, usb %s\r\n", board.wake_up_counter, board.wake_up_period, power_text[(uint)board.power], board.battery_voltage, usb_text[board.usb_connected]);
-    }
-	if (board.power == power_t::Battery)
-    	deep_sleep();
+  	static const char power_text[][16] = { "Battery", "USB" };
+    static const char usb_text[][16] = { "not connected", "connected" };
+    autoprint("wake %u/%u, power %s, voltage %u, usb %s\r\n", board.wake_up_counter, board.wake_up_period, power_text[(uint)board.power], board.battery_voltage, usb_text[board.usb_connected]);
+    autoprint("pulse %u/%u, adc %u/%u\r\n", board.impulses0, board.impulses1, board.ch0.adc_value, board.ch1.adc_value);
+	update_config(sett);
 
     uint8_t mode = TRANSMIT_MODE; // TRANSMIT_MODE;
-    bool config_loaded = false;
 
-    // спрашиваем у Attiny85 повод пробуждения и данные true) 
     mode = SETUP_MODE;
-    if (true) //masterI2C.getMode(mode) && masterI2C.getSlaveData(data))
+    if ((ulp_event == ulp_event_t::TIME) || (ulp_event == ulp_event_t::BUTTON))
     {
         // Загружаем конфигурацию из EEPROM
         config_loaded = load_config(sett);
         sett.mode = mode;
-        LOG_INFO(F("Startup mode: ") << mode);
+        autoprint("Startup mode: %u\r\n", mode);
 
         // Вычисляем текущие показания
-        calculate_values(sett, data, cdata);
+        calculate_values(sett, cdata);
 
         if (mode == SETUP_MODE)
         {
-            LOG_INFO(F("Entering in setup mode..."));
+            autoprint("Entering in setup mode...");
             // Режим настройки - запускаем точку доступа на 192.168.4.1
             // Запускаем точку доступа с вебсервером
 
@@ -118,17 +103,12 @@ void loop()
             sett.setup_time = millis();
             sett.setup_finished_counter++;
 
+            autoprint("Finish setup mode...");
             store_config(sett);
 
             wifi_shutdown();
 
-            LOG_INFO(F("Set mode MANUAL_TRANSMIT to attiny"));
-            //masterI2C.sendCmd('T'); // Режим "Передача"
-
-            LOG_INFO(F("Restart ESP"));
-            LOG_END();
-
-            LOG_INFO(F("Finish setup mode..."));
+            autoprint("Restart ESP");
             ESP.restart();
 
             return; // сюда не должно дойти никогда
@@ -157,7 +137,6 @@ void loop()
                     }
                 }
 
-                voltage_ticker.detach(); // перестаем обновлять перед созданием объекта с данными
                 LOG_INFO(F("Free memory: ") << ESP.getFreeHeap());
 
                 // Формироуем JSON
@@ -195,7 +174,7 @@ void loop()
                 // Все уже отправили,  wifi не нужен - выключаем
                 //wifi_shutdown();
 
-                update_config(sett, data, cdata);
+                update_config(sett);
 
 /*                if (!masterI2C.setWakeUpPeriod(sett.set_wakeup))
                 {
@@ -211,8 +190,6 @@ void loop()
             }
         }
     }
-    LOG_INFO(F("Going to sleep"));
-    LOG_END();
 
     if (!config_loaded)
     {
@@ -220,13 +197,13 @@ void loop()
         blink_led(3, 1000, 500);
     }
 
-    //masterI2C.sendCmd('Z'); // "Можешь идти спать, attiny"
-
-#ifdef ESP8266
-    ESP.deepSleepInstant(0, RF_DEFAULT); // Спим до следущего включения EN. Instant не ждет 92мс
-#endif
-#ifdef ESP32
-    esp_deep_sleep_start();
-#endif
-
+	if (board.power == power_t::Battery)
+	{
+    	gpio_set_level(LED_STATE, 0);
+    	deep_sleep();
+	}
+	else
+	{
+        delay(1000);
+	}
 }

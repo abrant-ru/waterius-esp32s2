@@ -6,23 +6,30 @@
 #include "Logging.h"
 #include "ulp_main.h"
 #include "../ulp/ulp_config.h"
+#include "config.h"
 
 extern const uint8_t ulp_main_bin_start[] asm("_binary_ulp_main_bin_start");
 extern const uint8_t ulp_main_bin_end[]   asm("_binary_ulp_main_bin_end");
 
+ulp_event_t ulp_event = ulp_event_t::NONE;		// Причина запуска
+board_data_t board;
+static const char wakeup_text[][16] = { "Undefined", "All", "Ext0", "Ext1", "Timer", "Touchpad", "ULP", "GPIO", "UART", "WiFi", "CoCPU int", "CoCPU crash", "BT" };
+static const char event_text[][16] = { "None", "Time", "Button", "USB" };
+static const char input_text[][16] = { "Disabled", "Discrete", "Analog" };
+
 //=====================================================================================
 ulp_event_t get_wakeup_event(void)
 {
-   	static const char wakeup_text[][16] = { "Undefined", "All", "Ext0", "Ext1", "Timer", "Touchpad", "ULP", "GPIO", "UART", "WiFi", "CoCPU int", "CoCPU crash", "BT" };
     esp_sleep_wakeup_cause_t cause = esp_sleep_get_wakeup_cause();
     autoprint("Startup, cause %s\r\n", wakeup_text[cause]);    
 
-    ulp_event_t event = ulp_event_t::NONE;
+    ulp_event = ulp_event_t::NONE;
     if (cause == ESP_SLEEP_WAKEUP_ULP) {
-        event = (ulp_event_t)ulp_wake_up_event;
+        ulp_event = (ulp_event_t)ulp_wake_up_event;
+        autoprint("ULP wakeup, event: %s\r\n", event_text[(uint)ulp_event]);
     }
     ulp_wake_up_event = 0;
-    return event;
+    return ulp_event;
 }
 
 //=====================================================================================
@@ -118,10 +125,18 @@ void initialize_rtc_pins(void)
 }
 
 //=====================================================================================
+void ulp_irq(void *arg)
+{
+    ulp_event = (ulp_event_t)ulp_wake_up_event;
+    ulp_wake_up_event = 0;
+    autoprint("Interrupt from ULP: %s\r\n", event_text[(uint)ulp_event]);
+}
+
+//=====================================================================================
 void init_ulp_program(void)
 {
     autoprint("Initializing ULP\r\n");
-    // Load binary
+    // Загружаем двоичный файл программы ULP-ядра
     esp_err_t err = ulp_load_binary(0, ulp_main_bin_start,
             (ulp_main_bin_end - ulp_main_bin_start) / sizeof(uint32_t));
     ESP_ERROR_CHECK(err);
@@ -139,8 +154,16 @@ void init_ulp_program(void)
     ulp_wake_up_counter = 0;
     ulp_wake_up_period = 120 * ULP_WAKEUP_PERIOD_SEC;
 
-    ulp_ch0_type = 1;
-    ulp_ch1_type = 1;
+	board.set_counter_type_0(sett.counter_type0);
+    board.ch0.pulse_count = sett.impulses0_previous & UINT16_MAX;
+	ulp_ch0_pulse_count = board.ch0.pulse_count;
+   	autoprint("Counter 0: %s, %lu\r\n", input_text[board.ch0.type], sett.impulses0_previous);
+
+	board.set_counter_type_1(sett.counter_type1);
+    board.ch1.pulse_count = sett.impulses1_previous & UINT16_MAX;
+	ulp_ch1_pulse_count = board.ch1.pulse_count;
+   	autoprint("Counter 1: %s, %lu\r\n", input_text[board.ch1.type], sett.impulses1_previous);
+
 	ulp_use_led = 1;
 	ulp_use_out = 1;
 
@@ -163,37 +186,94 @@ void init_ulp_program(void)
     rtc_gpio_isolate(GPIO_NUM_15);
 #endif // CONFIG_IDF_TARGET_ESP32
 
-    // Suppress boot messages
+    // Отключаем сообщения загрузчика
     esp_deep_sleep_disable_rom_logging(); 
 
-    // Set ULP wake up period
+    // Задаем период запуска программы ULP
     ulp_set_wakeup_period(0, ULP_WAKEUP_PERIOD);
 
-    // Start the program
+    // Запускаем ее
     err = ulp_run(&ulp_entry - RTC_SLOW_MEM);
     ESP_ERROR_CHECK(err);
+
+	// Устанавливаем обработчик прерывания
+	ulp_isr_register(ulp_irq, nullptr);
 }
 
 //=====================================================================================
-void board_read(board_data_t &data)
+bool board_data_t::read()
 {
-    data.config.use_led = ulp_use_led ? true : false;
-    data.config.use_out = ulp_use_out ? true : false;
-    data.config.debounce_max_count = ULP_BEBOUNCE_MAX_COUNT;
+	version = 25;
+
+    config.use_led = ulp_use_led ? true : false;
+    config.use_out = ulp_use_out ? true : false;
+    config.debounce_max_count = ULP_BEBOUNCE_MAX_COUNT;
     
-    data.ch0.type = ulp_ch0_type & UINT16_MAX;
-    data.ch0.pulse_count = ulp_ch0_pulse_count & UINT16_MAX;
-    data.ch0.adc_value = ulp_ch0_adc_value & UINT16_MAX;
+    ch0.type = ulp_ch0_type & UINT16_MAX;
+    ch0.pulse_count = ulp_ch0_pulse_count & UINT16_MAX;
+    ch0.adc_value = ulp_ch0_adc_value & UINT16_MAX;
+	if ((sett.impulses0_previous & UINT16_MAX) > ch0.pulse_count) {
+		impulses0 = (((sett.impulses0_previous >> 16) + 1) << 16) + ch0.pulse_count;
+	} else {
+		impulses0 = (sett.impulses0_previous & ((uint32_t)UINT16_MAX << 16)) + ch0.pulse_count;
+	}
 
-    data.ch1.type = ulp_ch1_type & UINT16_MAX;
-    data.ch1.pulse_count = ulp_ch1_pulse_count & UINT16_MAX;
-    data.ch1.adc_value = ulp_ch1_adc_value & UINT16_MAX;
+    ch1.type = ulp_ch1_type & UINT16_MAX;
+    ch1.pulse_count = ulp_ch1_pulse_count & UINT16_MAX;
+    ch1.adc_value = ulp_ch1_adc_value & UINT16_MAX;
+	if ((sett.impulses1_previous & UINT16_MAX) > ch1.pulse_count) {
+		impulses1 = (((sett.impulses1_previous >> 16) + 1) << 16) + ch1.pulse_count;
+	} else {
+		impulses1 = (sett.impulses1_previous & ((uint32_t)UINT16_MAX << 16)) + ch1.pulse_count;
+	}
 
-	data.power = gpio_get_level(BATT_EN) ? power_t::Battery : power_t::USB;
-    data.usb_connected = USBSerial;
-    data.battery_voltage = ULP_ADC_VOLTAGE(ulp_battery_adc_value & UINT16_MAX);
-    data.wake_up_counter = ulp_wake_up_counter & UINT16_MAX;
-    data.wake_up_period = ulp_wake_up_period & UINT16_MAX;
+	power = gpio_get_level(BATT_EN) ? power_t::Battery : power_t::USB;
+    usb_connected = USBSerial;
+    battery_voltage = ULP_ADC_VOLTAGE(ulp_battery_adc_value & UINT16_MAX);
+    wake_up_counter = ulp_wake_up_counter & UINT16_MAX;
+    wake_up_period = ulp_wake_up_period & UINT16_MAX;
+
+	return true;
+}
+
+//=====================================================================================
+bool board_data_t::set_counter_type_0(const uint8_t type0)
+{
+	bool result = true;
+
+	if (type0 == NAMUR) {
+		ch0.type = 2;
+	} else if ((type0 == DISCRETE) || (type0 == HALL)) {
+		ch0.type = 1;
+	} else if (type0 == NONE) {
+		ch0.type = 0;
+	} else {
+		ch0.type = 0;
+		result = false;
+	}
+	ulp_ch0_type = ch0.type;
+
+	return result;
+}
+
+//=====================================================================================
+bool board_data_t::set_counter_type_1(const uint8_t type1)
+{
+	bool result = true;
+
+	if (type1 == NAMUR) {
+		ch1.type = 2;
+	} else if ((type1 == DISCRETE) || (type1 == HALL)) {
+		ch1.type = 1;
+	} else if (type1 == NONE) {
+		ch1.type = 0;
+	} else {
+		ch1.type = 0;
+		result = false;
+	}
+	ulp_ch1_type = ch1.type;
+
+	return result;
 }
 
 //=====================================================================================

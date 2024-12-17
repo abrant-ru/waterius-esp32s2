@@ -13,7 +13,7 @@
 #include <ArduinoJson.h>
 #include "setup.h"
 #include "voltage.h"
-#include "master_i2c.h"
+#include "board.h"
 
 /**
     Конвертирует настройки и показания в json

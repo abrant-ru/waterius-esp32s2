@@ -13,7 +13,7 @@
 #ifndef HA_PUBLISH_DISCOVERY_H_
 #define HA_PUBLISH_DISCOVERY_H_
 
-#include "master_i2c.h"
+#include "board.h"
 #include <PubSubClient.h>
 
 class Settings;

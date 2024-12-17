@@ -10,8 +10,6 @@
 #include "sync_time.h"
 #include "wifi_helpers.h"
 #include "esp_wifi.h"
-//#include "flash_hal.h"
-
 
 // Конвертируем значение переменных компиляции в строк
 #define VALUE_TO_STRING(x) #x
@@ -50,6 +48,8 @@ bool init_config(Settings &sett)
     
     sett.counter0_name = CounterName::WATER_HOT;
     sett.counter1_name = CounterName::WATER_COLD;
+	sett.impulses0_previous = 0;
+	sett.impulses1_previous = 0;
 
     sett.factor0 = AS_COLD_CHANNEL;
     sett.factor1 = AUTO_IMPULSE_FACTOR;
@@ -258,49 +258,49 @@ bool load_config(Settings &sett)
 Берем начальные показания и кол-во импульсов,
 вычисляем текущие показания по новому кол-ву импульсов
 */
-void calculate_values(Settings &sett, const SlaveData &data, CalculatedData &cdata)
+void calculate_values(Settings &sett, CalculatedData &cdata)
 {
     LOG_INFO(F("Calculating values..."));
-    LOG_INFO(F("new impulses=") << data.impulses0 << " " << data.impulses1);
+    LOG_INFO(F("new impulses=") << board.impulses0 << " " << board.impulses1);
     LOG_INFO(F("factor0=") << sett.factor0 << F(" factor1=") << sett.factor1);
 
     if (sett.factor0 > 0) 
     {
-        if (data.impulses0 < sett.impulses0_start) {
-            sett.impulses0_start = data.impulses0;
+        if (board.impulses0 < sett.impulses0_start) {
+            sett.impulses0_start = board.impulses0;
             // Лучше потеряем в точности, чем будет показания миллионы
             LOG_ERROR(F("Impulses0 less than start. Reset impulses0_start"));
         }
 
-        if (data.counter_type0 == HALL)
+        if (sett.counter_type0 == HALL)
         {
-            cdata.channel0 = sett.channel0_start + (data.impulses0 - sett.impulses0_start) / 1000.0 / sett.factor0;
-            cdata.delta0 = (data.impulses0 - sett.impulses0_previous) / sett.factor0;
+            cdata.channel0 = sett.channel0_start + (board.impulses0 - sett.impulses0_start) / 1000.0 / sett.factor0;
+            cdata.delta0 = (board.impulses0 - sett.impulses0_previous) / sett.factor0;
         }
         else 
         {
-            cdata.channel0 = sett.channel0_start + (data.impulses0 - sett.impulses0_start) / 1000.0 * sett.factor0;
-            cdata.delta0 = (data.impulses0 - sett.impulses0_previous) * sett.factor0;
+            cdata.channel0 = sett.channel0_start + (board.impulses0 - sett.impulses0_start) / 1000.0 * sett.factor0;
+            cdata.delta0 = (board.impulses0 - sett.impulses0_previous) * sett.factor0;
         }
         LOG_INFO(F("new value0=") << cdata.channel0 << F(" delta0=") << cdata.delta0);
     }
 
     if (sett.factor1 > 0) 
     {
-        if (data.impulses1 < sett.impulses1_start) {
-            sett.impulses1_start = data.impulses1;
+        if (board.impulses1 < sett.impulses1_start) {
+            sett.impulses1_start = board.impulses1;
             LOG_ERROR(F("Impulses1 less than start. Reset impulses1_start"));
         }
 
-        if (data.counter_type1 == HALL)
+        if (sett.counter_type1 == HALL)
         {
-            cdata.channel1 = sett.channel1_start + (data.impulses1 - sett.impulses1_start) / 1000.0 / sett.factor1;
-            cdata.delta1 = (data.impulses1 - sett.impulses1_previous) / sett.factor1;
+            cdata.channel1 = sett.channel1_start + (board.impulses1 - sett.impulses1_start) / 1000.0 / sett.factor1;
+            cdata.delta1 = (board.impulses1 - sett.impulses1_previous) / sett.factor1;
         }
         else 
         {
-            cdata.channel1 = sett.channel1_start + (data.impulses1 - sett.impulses1_start) / 1000.0 * sett.factor1;
-            cdata.delta1 = (data.impulses1 - sett.impulses1_previous) * sett.factor1;
+            cdata.channel1 = sett.channel1_start + (board.impulses1 - sett.impulses1_start) / 1000.0 * sett.factor1;
+            cdata.delta1 = (board.impulses1 - sett.impulses1_previous) * sett.factor1;
         }
         LOG_INFO(F("new value1=") << cdata.channel1 << F(" delta1=") << cdata.delta1);
     }
@@ -308,12 +308,12 @@ void calculate_values(Settings &sett, const SlaveData &data, CalculatedData &cda
 }
 
 /* Обновляем значения в конфиге*/
-void update_config(Settings &sett, const SlaveData &data, const CalculatedData &cdata)
+void update_config(Settings &sett)
 {
     LOG_INFO(F("Updating config..."));
     // Сохраним текущие значения в памяти.
-    sett.impulses0_previous = data.impulses0;
-    sett.impulses1_previous = data.impulses1;
+    sett.impulses0_previous = board.impulses0;
+    sett.impulses1_previous = board.impulses1;
 
     // Перешлем время на сервер при след. включении
     sett.wake_time = millis();
@@ -330,7 +330,7 @@ void update_config(Settings &sett, const SlaveData &data, const CalculatedData &
         if ((is_valid_time(now) == is_valid_time(sett.last_send) && (now > sett.last_send)))
         {
             time_t t1 = (now - sett.last_send) / 60;
-            if (t1 > 1 && data.version >= 24)
+            if (t1 > 1 && board.version >= 24)
             {
                 LOG_INFO(F("Minutes diff:") << t1);
                 sett.set_wakeup = sett.wakeup_per_min * sett.set_wakeup / t1;

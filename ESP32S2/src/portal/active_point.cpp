@@ -1,10 +1,6 @@
 
-#ifdef ESP8266
-#include "ESPAsyncTCP.h"
-#else
 #include "esp_wifi_types.h"
 #include "esp_wifi.h"
-#endif
 #include "ESPAsyncWebServer.h"
 #include "WebHandlerImpl.h"
 #include <IPAddress.h>
@@ -14,7 +10,7 @@
 #include "AsyncJson.h"
 #include "setup.h"
 #include "Logging.h"
-#include "master_i2c.h"
+#include "board.h"
 #include "utils.h"
 #include "config.h"
 #include "wifi_helpers.h"
@@ -34,7 +30,6 @@ const String localIPURL = "http://192.168.4.1";
 
 extern SlaveData data;
 extern SlaveData runtime_data;
-extern MasterI2C masterI2C;
 extern Settings sett;
 extern CalculatedData cdata;
 

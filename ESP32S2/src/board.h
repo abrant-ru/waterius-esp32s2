@@ -8,7 +8,6 @@
 #include "soc/soc_ulp.h"
 #include "driver/gpio.h"
 #include "driver/rtc_io.h"
-#include "driver/adc.h"
 
 #define LED_S2			(gpio_num_t)15
 #define LED_STATE		GPIO_NUM_35
@@ -47,21 +46,55 @@ struct ulp_channel_t {
 };
 
 struct board_data_t {
-    ulp_config_t    config;
+    uint8_t version;    				// Версия ПО
+    ulp_config_t    config;				// Настройка режимов ULP
     ulp_channel_t   ch0;
     ulp_channel_t   ch1;
+	uint32_t		impulses0;
+	uint32_t		impulses1;
 	power_t			power;
 	bool			usb_connected;
     uint            battery_voltage;
     uint            wake_up_counter;
     uint            wake_up_period;
+	bool			read();
+	bool			set_counter_type_0(const uint8_t type0);
+	bool			set_counter_type_1(const uint8_t type1);
 };
+
+struct SlaveData
+{
+    // Header
+    uint8_t version;    // Версия ПО Attiny
+    uint8_t service;    // Причина загрузки Attiny
+    uint16_t reserved4; // Напряжение питания в мВ (после включения wi-fi под нагрузкой )
+    uint8_t reserved;
+    uint8_t setup_started_counter;
+    uint8_t resets;
+    uint8_t model;         // WATERIUS_CLASSIC или  WATERIUS_4C2W
+    uint8_t counter_type0; // Тип входа, вход 0
+    uint8_t counter_type1; //           вход 1
+    uint32_t impulses0;    // Импульсов, канал 0
+    uint32_t impulses1;    //           канал 1
+    uint16_t adc0;         // Уровень,   канал 0
+    uint16_t adc1;         //           канал 1
+
+    // HEADER_DATA_SIZE
+
+    uint8_t crc = 0; // Всегда в конце структуры данных
+    uint8_t reserved2 = 0;
+    uint8_t reserved3 = 0;
+    uint8_t reserved5 = 0;
+    // Кратно 16bit https://github.com/esp8266/Arduino/issues/1825
+};
+
+extern ulp_event_t ulp_event;
+extern board_data_t board;
 
 ulp_event_t get_wakeup_event(void);
 void deep_sleep(void);
 void initialize_pins(void);
 void initialize_rtc_pins(void);
 void init_ulp_program(void);
-void board_read(board_data_t &data);
 size_t autoprint(const char *format, ...);
 

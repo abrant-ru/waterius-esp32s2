@@ -7,8 +7,6 @@
 #define MQTT_CONNECT_DELAY 100
 #define MQTT_SUBSCRIPTION_TOPIC "/#"
 
-extern MasterI2C masterI2C;
-
 /**
  * @brief Обновление настроек по сообщению MQTT
  *
@@ -181,7 +179,7 @@ bool update_settings(String &topic, String &payload, Settings &sett, const Slave
             {
                 LOG_INFO(F("MQTT: CALLBACK: Old data.counter_type0: ") << data.counter_type0);
 
-                if (masterI2C.setCountersType(itype0, data.counter_type1))
+                if (board.set_counter_type_0(itype0))
                 {
                     updated = true;
 
@@ -202,7 +200,7 @@ bool update_settings(String &topic, String &payload, Settings &sett, const Slave
             {
                 LOG_INFO(F("MQTT: CALLBACK: Old data.counter_type1: ") << data.counter_type1);
 
-                if (masterI2C.setCountersType(data.counter_type0, itype1))
+                if (board.set_counter_type_1(itype1))
                 {
                     updated = true;
 
