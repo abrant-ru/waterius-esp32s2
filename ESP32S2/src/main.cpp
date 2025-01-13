@@ -26,6 +26,7 @@ SlaveData data;       // Данные от Attiny85
 Settings sett;        // Настройки соединения и предыдущие показания из EEPROM
 CalculatedData cdata; // вычисляемые данные
 bool config_loaded = false;
+uint8_t mode = 0;
 
 //=====================================================================================
 // Выполняется однократно при включении
@@ -77,12 +78,21 @@ void loop()
     static const char usb_text[][16] = { "not connected", "connected" };
     autoprint("wake %u/%u, power %s, voltage %u, usb %s\r\n", board.wake_up_counter, board.wake_up_period, power_text[(uint)board.power], board.battery_voltage, usb_text[board.usb_connected]);
     autoprint("pulse %u/%u, adc %u/%u\r\n", board.impulses0, board.impulses1, board.ch0.adc_value, board.ch1.adc_value);
+    if (board.button_time) autoprint("button %u\r\n", board.button_time);
 	update_config(sett);
 
-    uint8_t mode = TRANSMIT_MODE; // TRANSMIT_MODE;
+	if (mode == 0) 
+	{
+		if (ulp_event == ulp_event_t::TIME)
+			mode = TRANSMIT_MODE;
+		else if (ulp_event == ulp_event_t::BUTTON_SHORT)
+			mode = MANUAL_TRANSMIT_MODE;
+		else if (ulp_event == ulp_event_t::BUTTON_LONG)
+			mode = SETUP_MODE;
+		ulp_event = ulp_event_t::NONE;
+	}
 
-    mode = SETUP_MODE;
-    if ((ulp_event == ulp_event_t::TIME) || (ulp_event == ulp_event_t::BUTTON))
+    if (mode)
     {
         // Загружаем конфигурацию из EEPROM
         config_loaded = load_config(sett);
@@ -189,6 +199,7 @@ void loop()
                 store_config(sett);
             }
         }
+		mode = 0;
     }
 
     if (!config_loaded)

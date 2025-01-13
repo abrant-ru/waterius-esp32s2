@@ -136,11 +136,11 @@ ch0_analog_read:
 	st r1, r2, 0						// ch0_adc_value = R1
 
 	// compare with adc_low_thr
-	move r0, 1							// R0 = 0
+	move r0, 1							// R0 = 1
 	move r3, adc_low_thr				// R3 = adc_low_thr
 	sub r3, r3, r1						// R3 = R3 - R1
 	jump ch0_check, ov					// Jump if R3 < R1
-	move r0, 0							// R0 = 1
+	move r0, 0							// R0 = 0
 
 ch0_check:
 	// State of input in R0 changed?
@@ -148,7 +148,7 @@ ch0_check:
 	ld r3, r3, 0						// R3 = ch0_next_edge
 	add r3, r0, r3						// R3 = R0 + R3
 	and r3, r3, 1						// R3 = R3 & 0x0001
-	jump ch0_changed, eq				// Jump if R3==0
+	jump ch0_changed, EQ				// Jump if R3==0
 
 	// Not changed
 	// Reset debounce_counter to debounce_max_count
@@ -172,7 +172,7 @@ ch0_changed:
 	move r3, ch0_debounce_counter		// R3 = @ch0_debounce_counter
 	ld r2, r3, 0						// R2 = ch0_debounce_counter
 	add r2, r2, 0 						// dummy ADD to use "jump if ALU result is zero"
-	jump ch0_edge_detected, eq			// Jump if R2==0
+	jump ch0_edge_detected, EQ			// Jump if R2==0
 
 	// Not yet. Decrement debounce_counter
 	sub r2, r2, 1						// R2 = R2 - 1
@@ -197,7 +197,7 @@ ch0_edge_detected:
 
 	// Check pulse edge
 	add r1, r1, 0 						// dummy ADD to use "jump if current edge is zero"
-	jump ch0_edge_negative, eq			// Jump if R1==0
+	jump ch0_edge_negative, EQ			// Jump if R1==0
 
 	// Clear GPIO pin ULP_CH0_LED
 	WRITE_RTC_REG(RTC_CNTL_PAD_HOLD_REG, ULP_CH0_LED, 1, 0)

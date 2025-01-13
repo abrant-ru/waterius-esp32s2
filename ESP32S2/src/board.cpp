@@ -14,7 +14,7 @@ extern const uint8_t ulp_main_bin_end[]   asm("_binary_ulp_main_bin_end");
 ulp_event_t ulp_event = ulp_event_t::NONE;		// Причина запуска
 board_data_t board;
 static const char wakeup_text[][16] = { "Undefined", "All", "Ext0", "Ext1", "Timer", "Touchpad", "ULP", "GPIO", "UART", "WiFi", "CoCPU int", "CoCPU crash", "BT" };
-static const char event_text[][16] = { "None", "Time", "Button", "USB" };
+static const char event_text[][16] = { "None", "Time", "Button short", "Button long", "USB" };
 static const char input_text[][16] = { "Disabled", "Discrete", "Analog" };
 
 //=====================================================================================
@@ -232,6 +232,7 @@ bool board_data_t::read()
     battery_voltage = ULP_ADC_VOLTAGE(ulp_battery_adc_value & UINT16_MAX);
     wake_up_counter = ulp_wake_up_counter & UINT16_MAX;
     wake_up_period = ulp_wake_up_period & UINT16_MAX;
+	button_time = ulp_button_counter & UINT16_MAX;
 
 	return true;
 }

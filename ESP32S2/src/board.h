@@ -23,8 +23,9 @@ enum class power_t {
 enum class ulp_event_t {
     NONE            = 0,
     TIME            = 1,
-    BUTTON          = 2,
-    USB             = 3,
+    BUTTON_SHORT    = 2,
+    BUTTON_LONG    	= 3,
+    USB             = 4,
 };
 
 struct ulp_config_t {
@@ -57,6 +58,7 @@ struct board_data_t {
     uint            battery_voltage;
     uint            wake_up_counter;
     uint            wake_up_period;
+	uint			button_time;
 	bool			read();
 	bool			set_counter_type_0(const uint8_t type0);
 	bool			set_counter_type_1(const uint8_t type1);

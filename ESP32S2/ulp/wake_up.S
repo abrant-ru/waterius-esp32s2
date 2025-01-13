@@ -26,8 +26,31 @@ wake_up_counter:			// Current number of starts
 wake_up_event:				// Wake up event: 1=time, 2=key, 3=usb
 	.long 0
 
+	.global button_counter
+button_counter:				// Number of starts with pressed button
+	.long 0
+
 	.global check_wake_up
 check_wake_up:
+	// Check button
+	move r2, input						// R2 = @input
+	ld r0, r2, 0						// R0 = input
+	move r3, button_gpio				// R3 = button_gpio
+	rsh r0, r0, r3						// R0 = input >> button_gpio
+	and r0, r0, 1						// R0 = R0 & 0x0001
+	jumpr butt_press, 0, EQ				// Jump if R0==0
+
+butt_no_press:
+	// Button not pressed now
+	move r2, button_counter				// R2 = @button_counter
+	ld r3, r2, 0						// R3 = button_counter
+	move r1, 3							// R1 = 3 (duration 300ms)
+	sub r0, r1, r3						// R0 = R1 - R3
+	jump butt_was_pressed, OV			// Jump if R1 < R3
+	move r3, 0							// R3 = 0
+	st r3, r2, 0						// button_counter = R3
+
+check_sleep:
 	// Check if the system is in sleep mode
 #if CONFIG_IDF_TARGET_ESP32
 	READ_RTC_REG(RTC_CNTL_LOW_POWER_ST_REG, 27, 1)
@@ -36,14 +59,7 @@ check_wake_up:
 #endif
 	jumpr no_sleep, 1, EQ				// Jump if R0==1
 
-	// Check button
-	move r2, input						// R2 = @input
-	ld r0, r2, 0						// R0 = input
-	move r3, button_gpio				// R3 = button_gpio
-	rsh r0, r0, r3						// R0 = input >> button_gpio
-	and r0, r0, 1						// R0 = R0 & 0x0001
-	jumpr wake_up_key, 0, EQ			// Jump if R0==0
-
+check_usb:
 	// Check usb power
 	move r2, input						// R2 = @input
 	ld r0, r2, 0						// R0 = input
@@ -68,16 +84,41 @@ no_sleep:
 	// End program
 	halt
 
+butt_press:
+	// Button pressed
+	move r2, button_counter				// R2 = @button_counter
+	ld r3, r2, 0						// R3 = button_counter
+	move r1, 200						// R1 = 200 (max duration 20s)
+	sub r0, r1, r3						// R0 = R1 - R3
+	jump check_sleep, OV				// Jump if R1 < R3
+	// Increment counter if value < max
+	add r3, r3, 1						// R3 = R3 + 1
+	st r3, r2, 0						// button_counter = R3
+	jump check_sleep
+
+butt_was_pressed:
+	// Button was pressed, in R3 - duration, in R2 - @button_counter
+	move r1, 0							// R0 = 1
+	st r1, r2, 0						// button_counter = R1
+	move r1, 50							// R1 = 50 (duration 5s)
+	sub r0, r1, r3						// R0 = R1 - R3
+	jump wake_up_key_long, OV			// Jump if R1 < R3
+	jump wake_up_key_short
+
 wake_up_time:
 	move r0, 1
 	jump wake_up
 
-wake_up_key:
+wake_up_key_short:
 	move r0, 2
 	jump wake_up
 
-wake_up_usb:
+wake_up_key_long:
 	move r0, 3
+	jump wake_up
+
+wake_up_usb:
+	move r0, 4
 	jump wake_up
 
 	// End the program
