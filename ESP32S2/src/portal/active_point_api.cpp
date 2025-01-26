@@ -332,7 +332,7 @@ void get_api_status(AsyncWebServerRequest *request, const int index)
  *      }
  */
 
-void save_param(AsyncWebParameter *p, char *dest, size_t size, JsonObject &errorsObj, bool required /*true*/)
+void save_param(const AsyncWebParameter *p, char *dest, size_t size, JsonObject &errorsObj, bool required /*true*/)
 {
     if (p->value().length() >= size)
     {
@@ -353,7 +353,7 @@ void save_param(AsyncWebParameter *p, char *dest, size_t size, JsonObject &error
     }
 }
 
-void save_param(AsyncWebParameter *p, uint16_t &v, JsonObject &errorsObj)
+void save_param(const AsyncWebParameter *p, uint16_t &v, JsonObject &errorsObj)
 {
     if (p->value().toInt() == 0)
     {
@@ -367,7 +367,7 @@ void save_param(AsyncWebParameter *p, uint16_t &v, JsonObject &errorsObj)
     }
 }
 
-void save_param(AsyncWebParameter *p, uint8_t &v, JsonObject &errorsObj, const bool zero_ok)
+void save_param(const AsyncWebParameter *p, uint8_t &v, JsonObject &errorsObj, const bool zero_ok)
 {
     if (!zero_ok && p->value().toInt() == 0)
     {
@@ -381,7 +381,7 @@ void save_param(AsyncWebParameter *p, uint8_t &v, JsonObject &errorsObj, const b
     }
 }
 
-void save_bool_param(AsyncWebParameter *p, uint8_t &v, JsonObject &errorsObj)
+void save_bool_param(const AsyncWebParameter *p, uint8_t &v, JsonObject &errorsObj)
 {
     if (p->value().toInt() > 1)
     {
@@ -395,7 +395,7 @@ void save_bool_param(AsyncWebParameter *p, uint8_t &v, JsonObject &errorsObj)
     }
 }
 
-void save_param(AsyncWebParameter *p, float &v, JsonObject &errorsObj)
+void save_param(const AsyncWebParameter *p, float &v, JsonObject &errorsObj)
 {
     /* Позволяем вводить 0.0 у счётчиков.
     if (p->value().toFloat() == 0.0)
@@ -410,7 +410,7 @@ void save_param(AsyncWebParameter *p, float &v, JsonObject &errorsObj)
     }
 }
 
-void save_ip_param(AsyncWebParameter *p, uint32_t &v, JsonObject &errorsObj)
+void save_ip_param(const AsyncWebParameter *p, uint32_t &v, JsonObject &errorsObj)
 {
     IPAddress ip;
     if (ip.fromString(p->value()))
@@ -429,7 +429,7 @@ bool find_wizard_param(AsyncWebServerRequest *request)
 {
     for (size_t i = 0; i < request->params(); i++)
     {
-        AsyncWebParameter *p = request->getParam(i);
+        const AsyncWebParameter *p = request->getParam(i);
         if (p->name() == FPSTR(PARAM_WIZARD))
         {
             return p->value() == FPSTR(PARAM_TRUE);
@@ -442,7 +442,7 @@ uint8_t get_param_uint8(AsyncWebServerRequest *request, const String &name)
 {
     for (size_t i = 0; i < request->params(); i++)
     {
-        AsyncWebParameter *p = request->getParam(i);
+        const AsyncWebParameter *p = request->getParam(i);
         if (p->name() == name)
         {
             return p->value().toInt();
@@ -459,7 +459,7 @@ void applyInputSettings(AsyncWebServerRequest *request, JsonObject &errorsObj, c
 
     for (int i = 0; i < params; i++)
     {
-        AsyncWebParameter *p = request->getParam(i);
+        const AsyncWebParameter *p = request->getParam(i);
         const String &name = p->name();
         
         LOG_INFO(F("parameter ") << name << "=" << p->value());
@@ -561,7 +561,7 @@ void applySettings(AsyncWebServerRequest *request, JsonObject &errorsObj)
     // Вначале bool, чтобы дальше проверять только требуемые параметры
     for (int i = 0; i < params; i++)
     {
-        AsyncWebParameter *p = request->getParam(i);
+        const AsyncWebParameter *p = request->getParam(i);
         const String &name = p->name();
 
         LOG_INFO(F("parameter ") << name << "=" << p->value());
@@ -589,7 +589,7 @@ void applySettings(AsyncWebServerRequest *request, JsonObject &errorsObj)
 
     for (int i = 0; i < params; i++)
     {
-        AsyncWebParameter *p = request->getParam(i);
+        const AsyncWebParameter *p = request->getParam(i);
         const String &name = p->name();
 
         if (sett.waterius_on)
