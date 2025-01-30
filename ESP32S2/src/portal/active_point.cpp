@@ -20,13 +20,16 @@
 
 #define SETUP_TIME_SEC 600UL // На какое время Attiny включает ESP (файл Attiny85\src\Setup.h)
 
-bool exit_portal_flag = false;
-bool start_connect_flag = false;
-bool factory_reset_flag = false;
-wl_status_t wifi_connect_status = WL_DISCONNECTED;
+static active_point_state_t active_point_state = active_point_state_t::Idle;
+static AsyncWebServer*	server = NULL;
+static DNSServer*		dns = NULL;
+static unsigned long	start_timestamp = 0;
+bool 					exit_portal_flag = false;
+bool 					start_connect_flag = false;
+bool 					factory_reset_flag = false;
+wl_status_t 			wifi_connect_status = WL_DISCONNECTED;
 
 const String localIPURL = "http://192.168.4.1";
-
 
 extern SlaveData data;
 extern SlaveData runtime_data;
@@ -219,7 +222,6 @@ String processor_main(const String &var, const uint8_t input)
         }
     }
 
-
     else if (var == FPSTR(PARAM_IP))
         return IPAddress(sett.ip).toString();
     else if (var == FPSTR(PARAM_GATEWAY))
@@ -335,7 +337,7 @@ void on_root(AsyncWebServerRequest *request)
     }
 }
 
-void start_active_point(Settings &sett, CalculatedData &cdata)
+bool start_active_point()
 {   
     //Т.к. интерфейс берёт данные из runtime_data, то туда нужно загрузить их
     runtime_data = data;
@@ -343,10 +345,9 @@ void start_active_point(Settings &sett, CalculatedData &cdata)
     if (!LittleFS.begin())
     {
         LOG_INFO(F("FS: Mounting LittleFS error"));
-        return;
+        return false;
     }
     LOG_INFO(F("FS: LittleFS mounted"));
-    
 
     LOG_INFO(F("FS: ") << LittleFS.totalBytes() << F(" bytes, size"));
     LOG_INFO(F("FS: ") << LittleFS.totalBytes() - LittleFS.usedBytes() << F(" bytes, used"));
@@ -389,7 +390,7 @@ void start_active_point(Settings &sett, CalculatedData &cdata)
     if (!WiFi.softAP(get_ap_name(), "", sett.wifi_channel, 0, 4))
     {
         LOG_ERROR(F("AP started failed"));
-        return;
+        return false;
     }
 
     delay(500);
@@ -398,14 +399,14 @@ void start_active_point(Settings &sett, CalculatedData &cdata)
     LOG_INFO(F("IP: ") << WiFi.softAPIP());
 
     LOG_INFO(F("Start DNS server"));
-    DNSServer *dns = new DNSServer();
+    dns = new DNSServer();
     // dns->setTTL(3600);   //https://github.com/CDFER/Captive-Portal-ESP32/blob/main/src/main.cpp#L50C11-L50C25
     dns->start(53, "*", WiFi.softAPIP());
 
     LOG_INFO(F("DNS server started"));
 
     LOG_INFO(F("Start HTTP server"));
-    AsyncWebServer *server = new AsyncWebServer(80);
+    server = new AsyncWebServer(80);
 
     server->onNotFound(onNotFound);
 
@@ -562,33 +563,58 @@ void start_active_point(Settings &sett, CalculatedData &cdata)
     LOG_INFO(F("Start scan Wi-Fi networks"));
     WiFi.scanNetworks(true);
 
-    uint16_t start = millis();
-    while (!exit_portal_flag && ((millis() - start) / 1000) < SETUP_TIME_SEC)
-    {
-        dns->processNextRequest();
-        yield();
+	return true;
+}
 
-        if (start_connect_flag)
-        {
-            wifi_connect(sett, WIFI_AP_STA);
-            wifi_connect_status = WiFi.status();
-            start_connect_flag = false;
-        }
-        if (factory_reset_flag)
-        {
-            factory_reset(sett);
-        }
-    }
-
-    if (((millis() - start) / 1000) > SETUP_TIME_SEC)
-    {
-        LOG_ERROR(F("Portal setup time is over"));
-    }
-
-    LOG_INFO(F("Shutdown HTTP and DNS servers"));
-
-    server->end();
-    dns->stop();
-    delete server;
-    delete dns;
-};
+active_point_state_t active_point()
+{
+	if (sett.mode == SETUP_MODE)
+	{
+		if (active_point_state == active_point_state_t::Idle)
+		{
+			active_point_state = active_point_state_t::Start;
+			if (start_active_point())
+			{
+				active_point_state = active_point_state_t::Run;
+				start_timestamp = millis();
+			}
+			else 
+			{
+				active_point_state = active_point_state_t::Error;
+			}
+		}
+		else if (active_point_state == active_point_state_t::Run)
+		{
+        	dns->processNextRequest();
+        	if (start_connect_flag)
+        	{
+            	wifi_connect(sett, WIFI_AP_STA);
+            	wifi_connect_status = WiFi.status();
+            	start_connect_flag = false;
+        	}
+        	if (factory_reset_flag)
+        	{
+            	factory_reset(sett);
+        	}
+    		if (exit_portal_flag)
+    		{
+				active_point_state = active_point_state_t::Stop;
+    		}
+    		if (((millis() - start_timestamp) / 1000) > SETUP_TIME_SEC)
+    		{
+        		LOG_ERROR(F("Portal setup time is over"));
+				active_point_state = active_point_state_t::Stop;
+    		}
+		}
+		else if (active_point_state == active_point_state_t::Stop)
+		{
+    		LOG_INFO(F("Shutdown HTTP and DNS servers"));
+    		server->end();
+    		dns->stop();
+    		delete server;
+    		delete dns;
+			active_point_state = active_point_state_t::Finish;
+		}
+	}
+	return active_point_state;
+}

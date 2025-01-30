@@ -60,6 +60,9 @@ void setup()
         // Проснулись по сигналу от ULP
     }
 
+	// Читаем данные
+   	board.read();
+
     autoprint("Initializing complete\r\n");
 }
 
@@ -69,17 +72,25 @@ void setup()
 
 void loop()
 {
-	// Читаем данные
-    board.read();
-    gpio_set_level(LED_STATE, 1);
-    gpio_set_level(LED_S2, (board.power == power_t::USB));
-
-  	static const char power_text[][16] = { "Battery", "USB" };
-    static const char usb_text[][16] = { "not connected", "connected" };
-    autoprint("wake %u/%u, power %s, voltage %u, usb %s\r\n", board.wake_up_counter, board.wake_up_period, power_text[(uint)board.power], board.battery_voltage, usb_text[board.usb_connected]);
-    autoprint("pulse %u/%u, adc %u/%u\r\n", board.impulses0, board.impulses1, board.ch0.adc_value, board.ch1.adc_value);
-    if (board.button_time) autoprint("button %u\r\n", board.button_time);
-	update_config(sett);
+	static unsigned long interval_1s = 0;
+	unsigned long now = millis();
+	unsigned long elapsed = now - interval_1s;
+	if (elapsed > 1000) 
+	{
+		interval_1s = now;
+		// Читаем данные
+    	board.read();
+		// Обновляем светодиоды
+    	gpio_set_level(LED_STATE, 1);
+    	gpio_set_level(LED_S2, (board.power == power_t::USB));
+		// Пишем в консоль состояние
+  		static const char power_text[][16] = { "Battery", "USB" };
+    	static const char usb_text[][16] = { "not connected", "connected" };
+    	autoprint("wake %u/%u, power %s, voltage %u, usb %s\r\n", board.wake_up_counter, board.wake_up_period, power_text[(uint)board.power], board.battery_voltage, usb_text[board.usb_connected]);
+    	autoprint("pulse %u/%u, adc %u/%u\r\n", board.impulses0, board.impulses1, board.ch0.adc_value, board.ch1.adc_value);
+    	if (board.button_time) autoprint("button %u\r\n", board.button_time);
+		update_config(sett);
+	}
 
 	if (mode == 0) 
 	{
@@ -94,22 +105,22 @@ void loop()
 
     if (mode)
     {
-        // Загружаем конфигурацию из EEPROM
-        config_loaded = load_config(sett);
-        sett.mode = mode;
-        autoprint("Startup mode: %u\r\n", mode);
-
-        // Вычисляем текущие показания
-        calculate_values(sett, cdata);
-
-        if (mode == SETUP_MODE)
+		if (sett.mode == 0)
         {
-            autoprint("Entering in setup mode...");
-            // Режим настройки - запускаем точку доступа на 192.168.4.1
-            // Запускаем точку доступа с вебсервером
+			// Загружаем конфигурацию из EEPROM
+        	config_loaded = load_config(sett);
+        	sett.mode = mode;
+        	autoprint("Startup mode: %u\r\n", mode);
 
-            start_active_point(sett, cdata);
+        	// Вычисляем текущие показания
+        	calculate_values(sett, cdata);
+		}
 
+        // Режим настройки - запускаем точку доступа на 192.168.4.1
+        // Запускаем точку доступа с вебсервером
+        if (active_point() == active_point_state_t::Finish)
+        {
+			mode = 0;
             sett.setup_time = millis();
             sett.setup_finished_counter++;
 
@@ -124,7 +135,7 @@ void loop()
             return; // сюда не должно дойти никогда
         }
 
-        if (config_loaded)
+/*        if (config_loaded)
         {
             if (wifi_connect(sett))
             {
@@ -186,7 +197,7 @@ void loop()
 
                 update_config(sett);
 
-/*                if (!masterI2C.setWakeUpPeriod(sett.set_wakeup))
+                if (!masterI2C.setWakeUpPeriod(sett.set_wakeup))
                 {
                     LOG_ERROR(F("Wakeup period wasn't set"));
                 }
@@ -194,13 +205,13 @@ void loop()
                 {
                     LOG_INFO(F("Wakeup period, min:") << sett.wakeup_per_min);
                     LOG_INFO(F("Wakeup period (adjusted), min:") << sett.set_wakeup);
-                }*/
+                }
 
                 store_config(sett);
             }
-        }
+        }*/
 		mode = 0;
-    }
+    } 
 
     if (!config_loaded)
     {
@@ -208,13 +219,20 @@ void loop()
         blink_led(3, 1000, 500);
     }
 
-	if (board.power == power_t::Battery)
+	if (mode == 0)
 	{
-    	gpio_set_level(LED_STATE, 0);
-    	deep_sleep();
-	}
-	else
-	{
-        delay(1000);
+		// Если задач нету
+		if (board.power == power_t::Battery)
+		{
+			// При питании от батареи - уходим в сон
+    		gpio_set_level(LED_STATE, 0);
+    		//deep_sleep();
+        	delay(100);
+		}
+		else
+		{
+			// При питании от USB - продолжаем работать
+        	delay(100);
+		}
 	}
 }

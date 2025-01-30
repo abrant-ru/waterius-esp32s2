@@ -14,7 +14,16 @@ class Settings;
 class SlaveData;
 class CalculatedData;
 
-void start_active_point(Settings &sett, CalculatedData &cdata);
+enum class active_point_state_t {
+	Idle,
+	Start,
+	Run,
+	Stop,
+	Finish,
+	Error
+};
+
+active_point_state_t active_point();
 
 String processor_main(const String &var, const uint8_t input = 0xFF);
 
