@@ -18,6 +18,8 @@ list(APPEND compile_definitions "CONFIG_TINYUSB_ENABLED=1")
 list(APPEND compile_definitions "CONFIG_TINYUSB_CDC_ENABLED=1")
 list(APPEND compile_definitions "CONFIG_USB_ENABLED=1")
 list(APPEND compile_definitions "CONFIG_USB_CDC_ENABLED=1")
+list(APPEND compile_definitions "CONFIG_TINYUSB_CDC_RX_BUFSIZE=512")
+
 
 list(APPEND compile_definitions "CFG_TUSB_MCU=OPT_MCU_ESP32S2")
 list(APPEND compile_definitions "CFG_TUSB_OS_INC_PATH=freertos/")
@@ -27,15 +29,7 @@ list(APPEND compile_definitions "ARDUINO_USB_MODE=0")
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
-list(APPEND EXTRA_COMPONENT_DIRS components/espressif__tinyusb)
-include_directories(components/espressif__tinyusb/src)
-include_directories(components/espressif__tinyusb/src/common)
-include_directories(components/espressif__tinyusb/src/device)
-include_directories(components/espressif__tinyusb/src/class/cdc)
-include_directories(components/espressif__tinyusb/src/typec)
-
-list(APPEND EXTRA_COMPONENT_DIRS components/espressif__esp_tinyusb)
-include_directories(components/espressif__esp_tinyusb)
-include_directories(components/espressif__esp_tinyusb/include)
+include_directories(src/usb)
+include_directories(.pio/libdeps/esp32s2/TinyUSB/src)
 
 project(waterius-esp32)

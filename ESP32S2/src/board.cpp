@@ -291,3 +291,15 @@ size_t autoprint(const char *format, ...)
   	va_end(arg);
   	return result;
 }
+
+//=====================================================================================
+#ifdef __cplusplus
+extern "C" {
+#endif
+int board_usb_get_serial(char* buf, int length)
+{
+	return snprintf(buf, length, "1234");
+}
+#ifdef __cplusplus
+}
+#endif
