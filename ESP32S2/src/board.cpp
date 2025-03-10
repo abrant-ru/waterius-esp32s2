@@ -233,6 +233,7 @@ bool board_data_t::read()
     wake_up_counter = ulp_wake_up_counter & UINT16_MAX;
     wake_up_period = ulp_wake_up_period & UINT16_MAX;
 	button_time = ulp_button_counter & UINT16_MAX;
+	input = ulp_input & UINT16_MAX;
 
 	return true;
 }

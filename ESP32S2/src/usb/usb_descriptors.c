@@ -39,6 +39,8 @@
 #define USB_VID   0xCafe
 #define USB_BCD   0x0200
 
+extern int board_usb_get_serial(char* buf, int length);
+
 //--------------------------------------------------------------------+
 // Device Descriptors
 //--------------------------------------------------------------------+
@@ -232,10 +234,10 @@ enum {
 char const *string_desc_arr[] =
 {
   (const char[]) { 0x09, 0x04 }, // 0: is supported language is English (0x0409)
-  "TinyUSB",                     // 1: Manufacturer
-  "TinyUSB Device",              // 2: Product
+  "Waterius",                    // 1: Manufacturer
+  "Waterius ESP32",              // 2: Product
   NULL,                          // 3: Serials will use unique ID if possible
-  "TinyUSB CDC",                 // 4: CDC Interface
+  "Waterius USB serial",         // 4: CDC Interface
   "TinyUSB MSC",                 // 5: MSC Interface
 };
 
@@ -254,7 +256,7 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
       break;
 
     case STRID_SERIAL:
-      chr_count = board_usb_get_serial(_desc_str + 1, 32);
+      chr_count = board_usb_get_serial((char*)(_desc_str + 1), 32);
       break;
 
     default:

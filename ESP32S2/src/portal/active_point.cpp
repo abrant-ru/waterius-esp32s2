@@ -18,11 +18,15 @@
 #include "active_point_api.h"
 #include "active_point.h"
 
-#define SETUP_TIME_SEC 600UL // На какое время Attiny включает ESP (файл Attiny85\src\Setup.h)
+#define SETUP_TIME_SEC 			600UL // На какое время Attiny включает ESP (файл Attiny85\src\Setup.h)
+#define AP_TASK_STACK_SIZE		(4*1024)
+#define AP_TASK_PRIORITY		10
+
 
 static active_point_state_t active_point_state = active_point_state_t::Idle;
 static AsyncWebServer*	server = NULL;
 static DNSServer*		dns = NULL;
+static TaskHandle_t		task_handle = NULL;
 static unsigned long	start_timestamp = 0;
 bool 					exit_portal_flag = false;
 bool 					start_connect_flag = false;
@@ -309,7 +313,8 @@ void on_root(AsyncWebServerRequest *request)
 {
     LOG_INFO(F("on_root GET ") << request->url());
 
-    LOG_INFO(F("WIFI: wifi_connect_status=") << wifi_connect_status);
+    LOG_INFO(F("WIFI: wifi_connect_status=") << (int)wifi_connect_status);
+	delay(50);
 
     if (sett.factor1 == AUTO_IMPULSE_FACTOR)
     {
@@ -337,7 +342,7 @@ void on_root(AsyncWebServerRequest *request)
     }
 }
 
-bool start_active_point()
+bool setup_active_point()
 {   
     //Т.к. интерфейс берёт данные из runtime_data, то туда нужно загрузить их
     runtime_data = data;
@@ -566,55 +571,73 @@ bool start_active_point()
 	return true;
 }
 
+static void ap_task(void* pvParameters)
+{
+	active_point_state = active_point_state_t::Start;
+	if (setup_active_point()) {
+		active_point_state = active_point_state_t::Run;
+		start_timestamp = millis();
+	} else {
+		active_point_state = active_point_state_t::Error;
+	}
+
+	while (active_point_state == active_point_state_t::Run) {
+		dns->processNextRequest();
+		if (start_connect_flag)	{
+			wifi_connect(sett, WIFI_AP_STA);
+			wifi_connect_status = WiFi.status();
+			start_connect_flag = false;
+		}
+		if (factory_reset_flag)	{
+			factory_reset(sett);
+		}
+		if (exit_portal_flag) {
+			active_point_state = active_point_state_t::Stop;
+		}
+		if (((millis() - start_timestamp) / 1000) > SETUP_TIME_SEC)	{
+			LOG_ERROR(F("Portal setup time is over"));
+			active_point_state = active_point_state_t::Stop;
+		}
+	}
+
+	if (active_point_state == active_point_state_t::Stop) {
+		LOG_INFO(F("Shutdown HTTP and DNS servers"));
+		server->end();
+		dns->stop();
+		delete server;
+		delete dns;
+		active_point_state = active_point_state_t::Finish;
+	}
+}
+
+int start_active_point()
+{
+	if (active_point_state != active_point_state_t::Idle)
+		return ESP_ERR_INVALID_STATE;
+	// Создаем поток AP
+    BaseType_t err = xTaskCreate(
+		ap_task,
+		"active point",
+		AP_TASK_STACK_SIZE,
+		0,
+		AP_TASK_PRIORITY,
+		&task_handle);
+	if (err != pdTRUE) {
+		active_point_state = active_point_state_t::Error;
+		LOG_ERROR(F("Starting AP task failed"));
+		return ESP_ERR_INVALID_RESPONSE;
+	}
+}
+
 active_point_state_t active_point()
 {
-	if (sett.mode == SETUP_MODE)
-	{
-		if (active_point_state == active_point_state_t::Idle)
-		{
-			active_point_state = active_point_state_t::Start;
-			if (start_active_point())
-			{
-				active_point_state = active_point_state_t::Run;
-				start_timestamp = millis();
-			}
-			else 
-			{
-				active_point_state = active_point_state_t::Error;
-			}
+	if (sett.mode == SETUP_MODE) {
+		if (active_point_state == active_point_state_t::Idle) {
+			start_active_point();
 		}
-		else if (active_point_state == active_point_state_t::Run)
-		{
-        	dns->processNextRequest();
-        	if (start_connect_flag)
-        	{
-            	wifi_connect(sett, WIFI_AP_STA);
-            	wifi_connect_status = WiFi.status();
-            	start_connect_flag = false;
-        	}
-        	if (factory_reset_flag)
-        	{
-            	factory_reset(sett);
-        	}
-    		if (exit_portal_flag)
-    		{
-				active_point_state = active_point_state_t::Stop;
-    		}
-    		if (((millis() - start_timestamp) / 1000) > SETUP_TIME_SEC)
-    		{
-        		LOG_ERROR(F("Portal setup time is over"));
-				active_point_state = active_point_state_t::Stop;
-    		}
-		}
-		else if (active_point_state == active_point_state_t::Stop)
-		{
-    		LOG_INFO(F("Shutdown HTTP and DNS servers"));
-    		server->end();
-    		dns->stop();
-    		delete server;
-    		delete dns;
-			active_point_state = active_point_state_t::Finish;
-		}
+	}
+	if (active_point_state == active_point_state_t::Finish) {
+		task_handle = NULL;
 	}
 	return active_point_state;
 }

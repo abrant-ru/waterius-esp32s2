@@ -31,7 +31,7 @@ enum class ulp_event_t {
 struct ulp_config_t {
     bool            use_led;
     bool            use_out;
-    uint            debounce_max_count;
+    unsigned int	debounce_max_count;
 };
 
 enum class ulp_channel_type_t {
@@ -43,7 +43,7 @@ enum class ulp_channel_type_t {
 struct ulp_channel_t {
     uint16_t        type;
     uint16_t        pulse_count;
-    uint            adc_value;
+    unsigned int	adc_value;
 };
 
 struct board_data_t {
@@ -55,10 +55,11 @@ struct board_data_t {
 	uint32_t		impulses1;
 	power_t			power;
 	bool			usb_connected;
-    uint            battery_voltage;
-    uint            wake_up_counter;
-    uint            wake_up_period;
-	uint			button_time;
+    unsigned int    battery_voltage;
+    unsigned int	wake_up_counter;
+    unsigned int	wake_up_period;
+	unsigned int	button_time;
+	unsigned int	input;				// Входа GPIO, обработываемые ulp
 	bool			read();
 	bool			set_counter_type_0(const uint8_t type0);
 	bool			set_counter_type_1(const uint8_t type1);

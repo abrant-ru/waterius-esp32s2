@@ -32,16 +32,10 @@ dependencies:
       registry_url: https://components.espressif.com/
       type: service
     version: 1.4.0
-  espressif/tinyusb:
-    dependencies: []
-    source:
-      path: C:\Git\waterius-esp32s2\ESP32S2\components\espressif__tinyusb
-      type: local
-    version: 0.15.0~10
   idf:
     source:
       type: idf
-    version: 5.1.4
+    version: 5.1.5
   joltwallet/littlefs:
     component_hash: 362f1f5beb5087b0c60169aff82676d2d0ffc991ead975212b0cba95959181c5
     dependencies:
@@ -57,9 +51,8 @@ direct_dependencies:
 - espressif/esp-dsp
 - espressif/esp_modem
 - espressif/mdns
-- espressif/tinyusb
 - idf
 - joltwallet/littlefs
-manifest_hash: 429e5f9a439f98f6191343e3a96e1f1e6fbff82bcf74db9722c80926c784c3f6
+manifest_hash: 9afd49f2b22158dea9d0c197995d45a2e45cbdedabe946527469dd74044d4a03
 target: esp32s2
 version: 2.0.0

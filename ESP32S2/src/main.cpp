@@ -88,6 +88,7 @@ void loop()
     	static const char usb_text[][16] = { "not connected", "connected" };
     	autoprint("wake %u/%u, power %s, voltage %u, usb %s\r\n", board.wake_up_counter, board.wake_up_period, power_text[(uint)board.power], board.battery_voltage, usb_text[board.usb_connected]);
     	autoprint("pulse %u/%u, adc %u/%u\r\n", board.impulses0, board.impulses1, board.ch0.adc_value, board.ch1.adc_value);
+		autoprint("input %u\r\n", board.input);
     	if (board.button_time) autoprint("button %u\r\n", board.button_time);
 		update_config(sett);
 	}
