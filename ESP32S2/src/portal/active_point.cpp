@@ -8,6 +8,7 @@
 #include <LittleFS.h>
 #include <ArduinoJson.h>
 #include "AsyncJson.h"
+#include "esp_task_wdt.h"
 #include "setup.h"
 #include "Logging.h"
 #include "board.h"
@@ -19,7 +20,7 @@
 #include "active_point.h"
 
 #define SETUP_TIME_SEC 			600UL // На какое время Attiny включает ESP (файл Attiny85\src\Setup.h)
-#define AP_TASK_STACK_SIZE		(4*1024)
+#define AP_TASK_STACK_SIZE		(8*1024)
 #define AP_TASK_PRIORITY		10
 
 
@@ -573,6 +574,13 @@ bool setup_active_point()
 
 static void ap_task(void* pvParameters)
 {
+	esp_task_wdt_config_t twdt_config = {
+        .timeout_ms = 3000,
+        .idle_core_mask = (1 << CONFIG_SOC_CPU_CORES_NUM) - 1,    // Bitmask of all cores
+        .trigger_panic = false,
+    };
+    ESP_ERROR_CHECK(esp_task_wdt_reconfigure (&twdt_config));
+
 	active_point_state = active_point_state_t::Start;
 	if (setup_active_point()) {
 		active_point_state = active_point_state_t::Run;
@@ -598,6 +606,8 @@ static void ap_task(void* pvParameters)
 			LOG_ERROR(F("Portal setup time is over"));
 			active_point_state = active_point_state_t::Stop;
 		}
+
+		vTaskDelay(pdMS_TO_TICKS(50));
 	}
 
 	if (active_point_state == active_point_state_t::Stop) {
