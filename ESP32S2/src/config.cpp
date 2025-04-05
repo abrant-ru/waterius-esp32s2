@@ -4,13 +4,12 @@
 
 #include <WiFi.h>
 #include <IPAddress.h>
-#include <EEPROM.h>
 #include "utils.h"
 #include "porting.h"
 #include "sync_time.h"
 #include "wifi_helpers.h"
 #include "esp_wifi.h"
-
+#include "LittleFS.h"
 // Конвертируем значение переменных компиляции в строк
 #define VALUE_TO_STRING(x) #x
 #define VALUE(x) VALUE_TO_STRING(x)
@@ -20,19 +19,18 @@
 void store_config(const Settings &sett)
 {
     uint16_t crc = get_checksum(sett);
-    EEPROM.begin(sizeof(sett) + sizeof(crc));
-    EEPROM.put(0, sett);
-    EEPROM.put(sizeof(sett), crc);
 
-    if (!EEPROM.commit())
-    {
+    File configFile = LittleFS.open("/config.bin", "w");
+    File crcFile = LittleFS.open("/crc.bin", "w");
+    if (configFile && crcFile) {
+        configFile.write((uint8_t*)&sett, sizeof(sett));
+        configFile.close();
+        crcFile.write((uint8_t*)&crc, sizeof(crc));
+        crcFile.close();
+        LOG_INFO(F("Config stored OK crc=") << crc);
+    } else {
         LOG_ERROR(F("Config stored FAILED"));
     }
-    else
-    {
-        LOG_INFO(F("Config stored OK crc=") << crc);
-    }
-    EEPROM.end();
 }
 
 // Инициализация параметров по умолчанию
@@ -118,8 +116,8 @@ bool init_config(Settings &sett)
 #endif
 
     LOG_INFO(F("Generate waterius key"));
-    //generateSha256Token(sett.waterius_key, WATERIUS_KEY_LEN, sett.waterius_email);
-	strncpy0(sett.waterius_key, "4e8212f9711d9759baa829c10ccftu6c7", 34);
+    generateToken(sett.waterius_key, WATERIUS_KEY_LEN);
+	//strncpy0(sett.waterius_key, "4e8212f9711d9759baa829c10ccftu6c7", 34);  
     LOG_INFO(F("waterius key=") << sett.waterius_key);
 
 #ifdef WIFI_SSID
@@ -140,27 +138,17 @@ bool load_config(Settings &sett)
     LOG_INFO(F("Loading Config..."));
     uint16_t crc = 0;
     Settings tmp_sett = {};
-    EEPROM.begin(sizeof(tmp_sett) + sizeof(crc)); //  4 до 4096 байт. с адреса 0x7b000.
-    EEPROM.get(0, tmp_sett);
-    EEPROM.get(sizeof(tmp_sett), crc);
-    EEPROM.end();
 
-    uint16_t calculated_crc = get_checksum(tmp_sett);
-    if (crc == calculated_crc)
-    {
-        if (tmp_sett.version != sett.version)
-        {
-            LOG_INFO(F("ESP has old configuration version=") << tmp_sett.version);
-            LOG_INFO(F("Init configuration version=") << sett.version);
-            bool ret = init_config(sett);
-            
-            strncpy0(sett.waterius_key, tmp_sett.waterius_key, WATERIUS_KEY_LEN);
-            LOG_INFO(F("Restore waterius_key=") << sett.waterius_key);
-            store_config(sett);
+    File configFile = LittleFS.open("/config.bin", "r");
+    File crcFile = LittleFS.open("/crc.bin", "r");
+    if (configFile && crcFile) {
+        configFile.readBytes((char*)&tmp_sett, sizeof(tmp_sett));
+        configFile.close();
+        crcFile.readBytes((char*)&crc, sizeof(crc));
+        crcFile.close();
 
-            return ret;
-        }
-        else 
+        uint16_t calculated_crc = get_checksum(tmp_sett);
+        if (crc == calculated_crc)
         {
             sett = tmp_sett;
             LOG_INFO(F("Configuration CRC ok"));
@@ -244,12 +232,12 @@ bool load_config(Settings &sett)
 
             LOG_INFO(F("Config succesfully loaded"));
             return true;
+        } else {
+            LOG_ERROR(F("CRC=") << crc << F("is wrong, calculated=") << calculated_crc);
+            return false;
         }
-    }
-    else
-    {
-        LOG_INFO(F("ESP config CRC failed. Maybe first run. Init configuration."));
-        LOG_INFO(F("Saved crc=") << crc << F(" calculated=") << calculated_crc);
+    } else {
+        LOG_ERROR(F("Config files not found. Init new configuration"));
         return init_config(sett);
     }
 }

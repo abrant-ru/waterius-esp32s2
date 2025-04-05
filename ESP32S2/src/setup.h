@@ -97,6 +97,7 @@
 #endif
 
 // attiny85
+#define NONE_MODE 0
 #define SETUP_MODE 1
 #define TRANSMIT_MODE 2
 #define MANUAL_TRANSMIT_MODE 3
@@ -248,7 +249,7 @@ struct Settings
     /*
     Режим пробуждения
     */
-    uint8_t mode = SETUP_MODE; // SETUP_MODE
+    uint8_t mode = NONE_MODE;
 
     /*
     Успешная настройка

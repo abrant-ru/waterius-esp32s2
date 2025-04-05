@@ -26,7 +26,11 @@ inline Print &operator<<(Print &obj, T arg)
 		char logFormattedTime[17];                                                                    \
 		snprintf_P(logFormattedTime, sizeof(logFormattedTime),                                        \
 				   PSTR("%02u:%02u:%03u"), minutes, seconds, ms);                                     \
-		Serial << String(logFormattedTime);                                                           \
+		bool usb_connected = USBSerial;                                                               \
+		if (usb_connected) 		                                                                      \
+			USBSerial << String(logFormattedTime);                                                    \
+		else                                                                                          \
+			Serial0 << String(logFormattedTime);                                                      \
 	} while (0)
 
 #ifdef LOG_FREE_HEAP
@@ -44,9 +48,13 @@ inline Print &operator<<(Print &obj, T arg)
 	do                                                                 \
 	{                                                                  \
 		char logHeap[10];                                              \
-		snprintf_P(logHeap, sizeof(logHeap), PSTR("-%03d"),       \
-				   int(ESP.getFreeHeap() / 1024)); \
-		Serial << String(logHeap);                                     \
+		snprintf_P(logHeap, sizeof(logHeap), PSTR("-%03d"),            \
+				   int(ESP.getFreeHeap() / 1024));                     \
+		bool usb_connected = USBSerial;                                \
+		if (usb_connected) 		                                       \
+			USBSerial << String(logHeap);                              \
+		else                                                           \
+			Serial0 << String(logHeap);                                \
 	} while (0)
 #endif
 #else
@@ -67,15 +75,20 @@ inline Print &operator<<(Print &obj, T arg)
 #define LOG_BEGIN(baud)                 \
 	do                                  \
 	{                                   \
-		Serial.begin(baud);             \
+		/* Консоль приложения */        \
+		USBSerial.begin(baud);          \
+		/* Системная консоль */         \
+	    Serial0.begin(baud);            \
 	} while (0)
 #endif
 
-#define LOG_END()       \
-	do                  \
-	{                   \
-		Serial.flush(); \
-		Serial.end();   \
+#define LOG_END()          \
+	do                     \
+	{                      \
+		Serial0.flush();   \
+		Serial0.end();     \
+		USBSerial.flush(); \
+		USBSerial.end();   \
 	} while (0)
 #define LOG_INFO(content) \
 	do                    \
@@ -95,7 +108,11 @@ inline Print &operator<<(Print &obj, T arg)
 	{                                                \
 		LOG_FORMAT_TIME;                             \
 		LOG_FREE_HEAP;                               \
-		Serial << "  ERROR : " << content << "\r\n"; \
+		bool usb_connected = USBSerial;                     \
+		if (usb_connected) 		                            \
+			USBSerial << "  ERROR : " << content << "\r\n"; \
+		else                                                \
+			Serial0 << "  ERROR : " << content << "\r\n";   \
 	} while (0)
 #undef LOG_INFO
 #define LOG_INFO(content)                            \
@@ -103,7 +120,11 @@ inline Print &operator<<(Print &obj, T arg)
 	{                                                \
 		LOG_FORMAT_TIME;                             \
 		LOG_FREE_HEAP;                               \
-		Serial << "  INFO  : " << content << "\r\n"; \
+		bool usb_connected = USBSerial;                     \
+		if (usb_connected) 		                            \
+			USBSerial << "  INFO : " << content << "\r\n";  \
+		else                                                \
+			Serial0 << "  INFO : " << content << "\r\n";    \
 	} while (0)
 
 #endif // LOGLEVEL >= 0

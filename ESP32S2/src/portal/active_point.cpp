@@ -637,6 +637,8 @@ int start_active_point()
 		LOG_ERROR(F("Starting AP task failed"));
 		return ESP_ERR_INVALID_RESPONSE;
 	}
+
+    return 0;
 }
 
 active_point_state_t active_point()
