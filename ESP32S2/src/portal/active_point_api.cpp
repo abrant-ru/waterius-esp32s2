@@ -716,13 +716,9 @@ void post_api_save_input_type(AsyncWebServerRequest *request)
     //applySettings(request, errorsObj); ? нужно ли тут
     applyInputSettings(request, errorsObj, input);
 
-/*    if (input == 0)
+    if (input == 0)
     {   
-        if (runtime_data.counter_type0 == CounterType::HALL)
-        {
-            ret[F("redirect")] = F("/input/0/hall_detect.html");
-        }
-        else if (runtime_data.counter_type0 == CounterType::NONE)
+        if (runtime_data.ch0.type == (uint16_t)ulp_channel_type_t::Disabled)
         {
             ret[F("redirect")] = F("/index.html");
         }
@@ -733,11 +729,7 @@ void post_api_save_input_type(AsyncWebServerRequest *request)
     } 
     else if (input == 1)
     {
-        if (runtime_data.counter_type1 == CounterType::HALL)
-        {
-            ret[F("redirect")] = F("/input/1/hall_detect.html");
-        }
-        else if (runtime_data.counter_type1 == CounterType::NONE)
+        if (runtime_data.ch1.type == (uint16_t)ulp_channel_type_t::Disabled)
         {
             ret[F("redirect")] = F("/index.html");
         }
@@ -745,7 +737,7 @@ void post_api_save_input_type(AsyncWebServerRequest *request)
         {
             ret[F("redirect")] = F("/input/1/detect.html");
         }
-    }*/
+    }
 
     bool wizard = find_wizard_param(request);
     if (wizard)

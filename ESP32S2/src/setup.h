@@ -97,10 +97,12 @@
 #endif
 
 // attiny85
-#define NONE_MODE 0
-#define SETUP_MODE 1
-#define TRANSMIT_MODE 2
-#define MANUAL_TRANSMIT_MODE 3
+typedef enum {
+    NONE_MODE = 0,
+    SETUP_MODE, 
+    TRANSMIT_MODE,
+    MANUAL_TRANSMIT_MODE
+} waterius_wakeup_mode_t;
 
 // model
 #define WATERIUS_CLASSIC 0

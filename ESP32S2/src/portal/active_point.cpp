@@ -345,6 +345,8 @@ void on_root(AsyncWebServerRequest *request)
 
 bool setup_active_point()
 {   
+    calculate_values(sett, cdata);
+    
     //Т.к. интерфейс берёт данные из runtime_data, то туда нужно загрузить их
     runtime_data = data;
 
@@ -618,6 +620,8 @@ static void ap_task(void* pvParameters)
 		delete dns;
 		active_point_state = active_point_state_t::Finish;
 	}
+
+    vTaskDelete(NULL);
 }
 
 int start_active_point()
@@ -632,23 +636,22 @@ int start_active_point()
 		0,
 		AP_TASK_PRIORITY,
 		&task_handle);
+
 	if (err != pdTRUE) {
 		active_point_state = active_point_state_t::Error;
 		LOG_ERROR(F("Starting AP task failed"));
 		return ESP_ERR_INVALID_RESPONSE;
 	}
 
-    return 0;
+    return ESP_OK;
 }
 
 active_point_state_t active_point()
 {
-	if (sett.mode == SETUP_MODE) {
-		if (active_point_state == active_point_state_t::Idle) {
-			start_active_point();
-		}
-	}
-	if (active_point_state == active_point_state_t::Finish) {
+	if (active_point_state == active_point_state_t::Idle) {
+        start_active_point();
+    }
+    if (active_point_state == active_point_state_t::Finish) {
 		task_handle = NULL;
 	}
 	return active_point_state;

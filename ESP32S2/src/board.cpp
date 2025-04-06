@@ -23,13 +23,12 @@ ulp_event_t get_wakeup_event(void)
     esp_sleep_wakeup_cause_t cause = esp_sleep_get_wakeup_cause();
     autoprint("Startup, cause %s\r\n", wakeup_text[cause]);    
 
-    ulp_event = ulp_event_t::NONE;
     if (cause == ESP_SLEEP_WAKEUP_ULP) {
-        ulp_event = (ulp_event_t)ulp_wake_up_event;
-        autoprint("ULP wakeup, event: %s\r\n", event_text[(uint)ulp_event]);
+        autoprint("ULP wakeup, event: %s\r\n", event_text[ulp_wake_up_event]);
+        return (ulp_event_t)ulp_wake_up_event;
     }
     ulp_wake_up_event = 0;
-    return ulp_event;
+    return ulp_event_t::NONE;
 }
 
 //=====================================================================================
@@ -244,13 +243,13 @@ bool board_data_t::set_counter_type_0(const uint8_t type0)
 	bool result = true;
 
 	if (type0 == NAMUR) {
-		ch0.type = 2;
+		ch0.type = (uint16_t)ulp_channel_type_t::Analog;
 	} else if ((type0 == DISCRETE) || (type0 == HALL)) {
-		ch0.type = 1;
+		ch0.type = (uint16_t)ulp_channel_type_t::Discrete;
 	} else if (type0 == NONE) {
-		ch0.type = 0;
+		ch0.type = (uint16_t)ulp_channel_type_t::Disabled;
 	} else {
-		ch0.type = 0;
+		ch0.type = (uint16_t)ulp_channel_type_t::Disabled;
 		result = false;
 	}
 	ulp_ch0_type = ch0.type;
@@ -264,13 +263,13 @@ bool board_data_t::set_counter_type_1(const uint8_t type1)
 	bool result = true;
 
 	if (type1 == NAMUR) {
-		ch1.type = 2;
+		ch1.type = (uint16_t)ulp_channel_type_t::Analog;
 	} else if ((type1 == DISCRETE) || (type1 == HALL)) {
-		ch1.type = 1;
+		ch1.type = (uint16_t)ulp_channel_type_t::Discrete;
 	} else if (type1 == NONE) {
-		ch1.type = 0;
+		ch1.type = (uint16_t)ulp_channel_type_t::Disabled;
 	} else {
-		ch1.type = 0;
+		ch1.type = (uint16_t)ulp_channel_type_t::Disabled;
 		result = false;
 	}
 	ulp_ch1_type = ch1.type;

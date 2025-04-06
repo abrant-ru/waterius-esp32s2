@@ -41,7 +41,7 @@ enum class ulp_channel_type_t {
 };
 
 struct ulp_channel_t {
-    uint16_t        type;
+    uint16_t        type;  // ulp_channel_type_t
     uint16_t        pulse_count;
     unsigned int	adc_value;
 };

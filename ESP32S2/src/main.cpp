@@ -56,7 +56,7 @@ void setup()
     config_loaded = load_config(sett);
 
     // Определяем причину запуска
-    get_wakeup_event();
+    ulp_event = get_wakeup_event();
     if (ulp_event == ulp_event_t::NONE) {
         // Обычный запуск
         initialize_rtc_pins();
@@ -71,6 +71,10 @@ void setup()
 
     autoprint("Initializing complete\r\n");
 }
+
+#define IS_SETUP_MODE(x) (x == ulp_event_t::BUTTON_LONG)
+#define IS_MANUAL_TRANSMIT_MODE(x) (x == ulp_event_t::BUTTON_SHORT)
+#define IS_TRANSMIT_MODE(x) (x == ulp_event_t::TIME)
 
 //=====================================================================================
 // Выполняется в цикле после setup
@@ -100,48 +104,39 @@ void loop()
 		update_config(sett);
 	}
 
-    if (ulp_event == ulp_event_t::TIME)
-        sett.mode = TRANSMIT_MODE;
-    else if (ulp_event == ulp_event_t::BUTTON_SHORT)
-        sett.mode = MANUAL_TRANSMIT_MODE;
-    else if (ulp_event == ulp_event_t::BUTTON_LONG)
-        sett.mode = SETUP_MODE;
-    else
-    {
-        ulp_event = ulp_event_t::NONE;
-    }
     //autoprint("mode %u\r\n", mode);
     
-    if (sett.mode != NONE_MODE)
-    {   
-        LOG_INFO(F("mode: ") << sett.mode);
+    if (IS_SETUP_MODE(ulp_event))
+    {
+        if (active_point() == active_point_state_t::Finish)
+        {
+            sett.setup_time = millis();
+            sett.setup_finished_counter++;
+
+            autoprint("Finish setup mode...");
+            store_config(sett);
+
+            wifi_shutdown();
+            
+            ulp_event = ulp_event_t::NONE;
+            
+            //autoprint("Restart ESP");
+            //ESP.restart();
+            
+            // Раньше нужен был restart, т.к. 8266 не могла передавать по https после режима AP. 
+            // esp32 возможно может и не надо рестартовать! иначе после рестарта нужен mode = TRANSMIT_MODE
+            //return; // сюда не должно дойти никогда
+        }
+    }
+
+    if (IS_MANUAL_TRANSMIT_MODE(ulp_event) || IS_TRANSMIT_MODE(ulp_event))
+    {
+        LOG_INFO(F("ulp_event: ") << (uint8_t)ulp_event);
+        
         // Вычисляем текущие показания
         calculate_values(sett, cdata);
         
-        if (sett.mode == SETUP_MODE)
-        {
-            // Режим настройки - запускаем точку доступа на 192.168.4.1
-            // Запускаем точку доступа с вебсервером
-            if (active_point() == active_point_state_t::Finish)
-            {
-                sett.setup_time = millis();
-                sett.setup_finished_counter++;
-
-                autoprint("Finish setup mode...");
-                store_config(sett);
-
-                wifi_shutdown();
-
-                //autoprint("Restart ESP");
-                //ESP.restart();
-                
-                // Раньше нужен был restart, т.к. 8266 не могла передавать по https после режима AP. 
-                // esp32 возможно может и не надо рестартовать! иначе после рестарта нужен mode = TRANSMIT_MODE
-                //return; // сюда не должно дойти никогда
-            }
-        }
-        
-        if (config_loaded && wifi_connect(sett))
+        if (wifi_connect(sett))
         {
             log_system_info();
 
@@ -197,7 +192,7 @@ void loop()
             }
 #endif
             // Все уже отправили,  wifi не нужен - выключаем
-            //wifi_shutdown();
+            wifi_shutdown();
 
             update_config(sett);
 
@@ -214,7 +209,6 @@ void loop()
             store_config(sett);
         }
         
-        sett.mode = NONE_MODE;
         ulp_event == ulp_event_t::NONE; // обработали всё
         LOG_INFO(F("mode set NONE"));
     } 
@@ -224,12 +218,14 @@ void loop()
         // Если задач нету
         if (board.power == power_t::Battery)
         {
+            //LOG_INFO(F("battery power"));
             // При питании от батареи - уходим в сон
             gpio_set_level(LED_STATE, 0);
             deep_sleep();
         }
         else
         {
+            //LOG_INFO(F("USB power"));
             // При питании от USB - продолжаем работать
         }
     }
