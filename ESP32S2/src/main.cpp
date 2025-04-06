@@ -216,6 +216,7 @@ void loop()
         
         sett.mode = NONE_MODE;
         ulp_event == ulp_event_t::NONE; // обработали всё
+        LOG_INFO(F("mode set NONE"));
     } 
 
     if (sett.mode == NONE_MODE)
