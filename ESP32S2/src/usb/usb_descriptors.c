@@ -32,11 +32,14 @@
  * Auto ProductID layout's Bitmap:
  *   [MSB]         HID | MSC | CDC          [LSB]
  */
+/*
 #define _PID_MAP(itf, n)  ( (CFG_TUD_##itf) << (n) )
 #define USB_PID           (0x4000 | _PID_MAP(CDC, 0) | _PID_MAP(MSC, 1) | _PID_MAP(HID, 2) | \
                            _PID_MAP(MIDI, 3) | _PID_MAP(VENDOR, 4) )
+*/
 
-#define USB_VID   0xCafe
+#define USB_VID   0x303A
+#define USB_PID   0x0002
 #define USB_BCD   0x0200
 
 extern int board_usb_get_serial(char* buf, int length);
@@ -236,7 +239,7 @@ char const *string_desc_arr[] =
   (const char[]) { 0x09, 0x04 }, // 0: is supported language is English (0x0409)
   "Waterius",                    // 1: Manufacturer
   "Waterius ESP32",              // 2: Product
-  NULL,                          // 3: Serials will use unique ID if possible
+  "0",                           // 3: Serials will use unique ID if possible
   "Waterius USB serial",         // 4: CDC Interface
   "TinyUSB MSC",                 // 5: MSC Interface
 };
@@ -253,10 +256,6 @@ uint16_t const *tud_descriptor_string_cb(uint8_t index, uint16_t langid) {
     case STRID_LANGID:
       memcpy(&_desc_str[1], string_desc_arr[0], 2);
       chr_count = 1;
-      break;
-
-    case STRID_SERIAL:
-      chr_count = board_usb_get_serial((char*)(_desc_str + 1), 32);
       break;
 
     default:
