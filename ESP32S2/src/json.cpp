@@ -11,7 +11,7 @@
 #include "wifi_helpers.h"
 
 
-void get_json_data(const Settings &sett, const SlaveData &data, const CalculatedData &cdata, DynamicJsonDocument &json_data)
+void get_json_data(const Settings &sett, const SlaveData &data, const CalculatedData &cdata, JsonDocument &json_data)
 {
     Voltage *voltage = get_voltage();
     JsonObject root = json_data.to<JsonObject>();
@@ -90,7 +90,7 @@ void get_json_data(const Settings &sett, const SlaveData &data, const Calculated
     root[F("ha")] = is_ha(sett);
     root[F("http")] = is_http(sett);
 
-    LOG_INFO(F("JSON: Mem usage: ") << json_data.memoryUsage());
+    //LOG_INFO(F("JSON: Mem usage: ") << json_data.memoryUsage());
     LOG_INFO(F("JSON: Size: ") << measureJson(json_data));
 
     // JSON size 0.10.3: 355

@@ -15,7 +15,7 @@
  * @param sett настройки
  * @param json_data данные в JSON
  */
-bool update_settings(String &topic, String &payload, Settings &sett, const SlaveData &data, DynamicJsonDocument &json_data)
+bool update_settings(String &topic, String &payload, Settings &sett, const SlaveData &data, JsonDocument &json_data)
 {
     bool updated = false;
     if (topic.endsWith(F("/set"))) // пришла команда на изменение
@@ -38,7 +38,7 @@ bool update_settings(String &topic, String &payload, Settings &sett, const Slave
                     LOG_INFO(F("MQTT: CALLBACK: Old Settings.wakeup_per_min: ") << sett.wakeup_per_min);
                     sett.wakeup_per_min = period_min;
                     // если есть ключ то время уже получено и json уже сформирован, можно отправлять
-                    if (json_data.containsKey("period_min"))   //todo добавить F("")
+                    if (json_data["period_min"].is<JsonVariant>())   //todo добавить F("")
                     {
                         json_data[F("period_min")] = period_min;
                         updated = true;
@@ -55,7 +55,7 @@ bool update_settings(String &topic, String &payload, Settings &sett, const Slave
                 {
                     LOG_INFO(F("MQTT: CALLBACK: Old Settings.factor0: ") << sett.factor0);
                     sett.factor0 = f0;
-                    if (json_data.containsKey("f0"))
+                    if (json_data["f0"].is<JsonVariant>())
                     {
                         json_data[F("f0")] = f0;
                         updated = true;
@@ -75,7 +75,7 @@ bool update_settings(String &topic, String &payload, Settings &sett, const Slave
                 {
                     LOG_INFO(F("MQTT: CALLBACK: Old Settings.factor1: ") << sett.factor1);
                     sett.factor1 = f1;
-                    if (json_data.containsKey("f1"))
+                    if (json_data["f1"].is<JsonVariant>())
                     {
                         json_data[F("f1")] = f1;
                         updated = true;
@@ -100,7 +100,7 @@ bool update_settings(String &topic, String &payload, Settings &sett, const Slave
                 LOG_INFO(F("MQTT: CALLBACK: New Settings.channel0_start: ") << sett.channel0_start);
                 LOG_INFO(F("MQTT: CALLBACK: New Settings.impulses0_start: ") << sett.impulses0_start);
 
-                if (json_data.containsKey("ch0"))
+                if (json_data["ch0"].is<JsonVariant>())
                 {
                     json_data[F("ch0")] = ch0;
                 }
@@ -122,7 +122,7 @@ bool update_settings(String &topic, String &payload, Settings &sett, const Slave
                 LOG_INFO(F("MQTT: CALLBACK: New Settings.channel1_start: ") << sett.channel1_start);
                 LOG_INFO(F("MQTT: CALLBACK: New Settings.impulses1_start: ") << sett.impulses1_start);
 
-                if (json_data.containsKey("ch1"))
+                if (json_data["ch1"].is<JsonVariant>())
                 {
                     json_data[F("ch1")] = ch1;
                 }
@@ -138,12 +138,12 @@ bool update_settings(String &topic, String &payload, Settings &sett, const Slave
                 LOG_INFO(F("MQTT: CALLBACK: Old Settings.counter0_name: ") << sett.counter0_name);
                 sett.counter0_name = cname0;
                 LOG_INFO(F("MQTT: CALLBACK: New Settings.counter0_name: ") << sett.counter0_name);
-                if (json_data.containsKey("cname0"))
+                if (json_data["cname0"].is<JsonVariant>())
                 {
                     json_data[F("cname0")] = cname0;
                     updated = true;
                 }
-                if (json_data.containsKey("data_type0"))
+                if (json_data["data_type0"].is<JsonVariant>())
                 {
                     json_data[F("data_type0")] = (uint8_t)data_type_by_name(cname0);
                     updated = true;
@@ -159,12 +159,12 @@ bool update_settings(String &topic, String &payload, Settings &sett, const Slave
                 LOG_INFO(F("MQTT: CALLBACK: Old Settings.counter1_name: ") << sett.counter1_name);
                 sett.counter1_name = cname1;
                 LOG_INFO(F("MQTT: CALLBACK: New Settings.counter1_name: ") << sett.counter1_name);
-                if (json_data.containsKey("cname1"))
+                if (json_data["cname1"].is<JsonVariant>())
                 {
                     json_data[F("cname1")] = cname1;
                     updated = true;
                 }
-                if (json_data.containsKey("data_type1"))
+                if (json_data["data_type1"].is<JsonVariant>())
                 {
                     json_data[F("data_type1")] = (uint8_t)data_type_by_name(cname1);
                     updated = true;
@@ -184,7 +184,7 @@ bool update_settings(String &topic, String &payload, Settings &sett, const Slave
                     updated = true;
 
                     LOG_INFO(F("MQTT: CALLBACK: New data.counter_type0: ") << itype0);
-                    if (json_data.containsKey("itype0"))
+                    if (json_data["itype0"].is<JsonVariant>())
                     {
                         json_data[F("itype0")] = itype0;
                         
@@ -205,7 +205,7 @@ bool update_settings(String &topic, String &payload, Settings &sett, const Slave
                     updated = true;
 
                     LOG_INFO(F("MQTT: CALLBACK: New data.counter_type1: ") << itype1);
-                    if (json_data.containsKey("itype1"))
+                    if (json_data["itype1"].is<JsonVariant>())
                     {
                         json_data[F("itype1")] = itype1;
                         
@@ -230,7 +230,7 @@ bool update_settings(String &topic, String &payload, Settings &sett, const Slave
  * @param raw_payload  данные из топика
  * @param length длина сообщения
  */
-void mqtt_callback(Settings &sett, const SlaveData &data, DynamicJsonDocument &json_data, PubSubClient &mqtt_client, String &mqtt_topic, char *raw_topic, byte *raw_payload, unsigned int length)
+void mqtt_callback(Settings &sett, const SlaveData &data, JsonDocument &json_data, PubSubClient &mqtt_client, String &mqtt_topic, char *raw_topic, byte *raw_payload, unsigned int length)
 {
     String topic = raw_topic;
     String payload;

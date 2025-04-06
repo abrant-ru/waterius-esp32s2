@@ -51,7 +51,7 @@ String build_entity_discovery(const char *mqtt_topic,
                               const char *json_attributes_topic,
                               const char *json_attributes_template)
 {
-    DynamicJsonDocument json_doc(JSON_DYNAMIC_MSG_BUFFER);
+    JsonDocument json_doc;
     JsonObject entity = json_doc.to<JsonObject>();
 
     entity[F("name")] = entity_name; // name
@@ -89,10 +89,12 @@ String build_entity_discovery(const char *mqtt_topic,
     if (MQTT_FORCE_UPDATE)
         entity[F("force_update")] = true; // force_update
 
-    StaticJsonDocument<JSON_SMALL_STATIC_MSG_BUFFER> json_device_doc;
+    
+    JsonDocument json_device_doc;
     JsonObject device = json_device_doc.to<JsonObject>();
-    JsonArray identifiers = device.createNestedArray(F("identifiers")); // identifiers //ids
 
+    JsonArray identifiers = device[F("identifiers")].to<JsonArray>();
+    
     identifiers[0] = device_id;
     identifiers[1] = device_mac;
 
@@ -141,11 +143,10 @@ String build_entity_discovery(const char *mqtt_topic,
         entity[F("qos")] = 1; //qos
     }
 
-    LOG_INFO(F("MQTT: DISCOVERY SENSOR: JSON Mem usage: ") << json_doc.memoryUsage());
-    LOG_INFO(F("MQTT: DISCOVERY SENSOR: JSON size: ") << measureJson(json_doc));
-
     String payload;
     serializeJson(entity, payload);
+
+    LOG_INFO(F("MQTT: DISCOVERY SENSOR: JSON size: ") << payload.length());
 
     return payload;
 }
@@ -164,7 +165,7 @@ String get_attributes_template(const char *const attrs[][MQTT_PARAM_COUNT], int 
 {
     String json_attributes_template = "";
 
-    DynamicJsonDocument json_doc(JSON_DYNAMIC_MSG_BUFFER);
+    JsonDocument json_doc;
     JsonObject json_attributes = json_doc.to<JsonObject>();
     String attribute_name;
     String attribute_id;

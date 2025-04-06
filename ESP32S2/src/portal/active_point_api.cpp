@@ -42,7 +42,7 @@ void get_api_connect_status(AsyncWebServerRequest *request)
 {
     LOG_INFO(F("GET ") << request->url());
 
-    DynamicJsonDocument json_doc(JSON_SMALL_STATIC_MSG_BUFFER);
+    JsonDocument json_doc;
     JsonObject ret = json_doc.to<JsonObject>();
 
     if (start_connect_flag)
@@ -86,13 +86,13 @@ void get_api_networks(AsyncWebServerRequest *request)
     }
     else if (n)
     {
-        DynamicJsonDocument json_doc(JSON_DYNAMIC_MSG_BUFFER);
+        JsonDocument json_doc;
         JsonArray array = json_doc.to<JsonArray>();
 
         for (int i = 0; i < n; ++i)
         {
             LOG_INFO(WiFi.SSID(i) << " " << WiFi.RSSI(i));
-            JsonObject obj = array.createNestedObject();
+            JsonObject obj = array.add<JsonObject>();
             obj["ssid"] = WiFi.SSID(i);
             obj["level"] = int(round(map(WiFi.RSSI(i), -100, -50, 1, 4)));
             obj["wifi_channel"] = WiFi.channel();
@@ -117,9 +117,10 @@ void post_api_save_connect(AsyncWebServerRequest *request)
 {
     LOG_INFO(F("POST ") << request->url());
 
-    DynamicJsonDocument json_doc(JSON_SMALL_STATIC_MSG_BUFFER);
+    JsonDocument json_doc;
     JsonObject ret = json_doc.to<JsonObject>();
-    JsonObject errorsObj = ret.createNestedObject(F("errors"));
+    
+    JsonObject errorsObj = ret[F("errors")].to<JsonObject>();  // елси не массив а { }
 
     // Если канал WiFi отличен от текущего канала AP ESP, то возможно отключение телефона
     uint8_t channel = sett.wifi_channel;
@@ -199,7 +200,7 @@ void get_api_main_status(AsyncWebServerRequest *request)
 {
     LOG_INFO(F("GET ") << request->url());
 
-    DynamicJsonDocument json_doc(JSON_SMALL_STATIC_MSG_BUFFER);
+    JsonDocument json_doc;
     JsonArray array = json_doc.to<JsonArray>();
 
     wl_status_t status = WiFi.status();
@@ -207,7 +208,7 @@ void get_api_main_status(AsyncWebServerRequest *request)
     
     if (status == WL_CONNECT_FAILED || status == WL_CONNECTION_LOST)
     {
-        JsonObject obj = array.createNestedObject();
+        JsonObject obj = array.add<JsonObject>();
         obj["error"] = F("1");  // S_WIFI_CONNECT "Ошибка подключения к Wi-Fi"
         obj["link_text"] = F("5"); // S_SETUP Настроить
         obj["link"] = String(F("/wifi_settings.html?status_code=")) + String(status);
@@ -218,14 +219,14 @@ void get_api_main_status(AsyncWebServerRequest *request)
         {
             if (status == WL_CONNECTED)
             {
-                JsonObject obj = array.createNestedObject();
+                JsonObject obj = array.add<JsonObject>();
                 obj["error"] = F("2");  // S_SETUP_COUNTERS "Ватериус успешно подключился к Wi-Fi. Теперь настроим счётчики."
                 obj["link_text"] = F("5"); // S_SETUP Настроить
                 obj["link"] = F("/input/1/setup.html");
             }
             else 
             {
-                JsonObject obj = array.createNestedObject();
+                JsonObject obj = array.add<JsonObject>();
                 obj["error"] = F("3");  // S_NEED_SETUP "Ватериус ещё не настроен"
                 obj["link_text"] = F("6"); // S_LETSGO Приступить
                 obj["link"] = F("/captive_portal_start.html");
@@ -233,7 +234,7 @@ void get_api_main_status(AsyncWebServerRequest *request)
         }
     }
 
-    LOG_INFO(F("JSON: Mem usage: ") << json_doc.memoryUsage());
+    //LOG_INFO(F("JSON: Mem usage: ") << json_doc.memoryUsage());
     LOG_INFO(F("JSON: Size: ") << measureJson(json_doc));
 
     AsyncResponseStream *response = request->beginResponseStream("application/json");
@@ -260,7 +261,7 @@ void get_api_status(AsyncWebServerRequest *request, const int index)
 {
     LOG_INFO(F("GET ") << request->url());
 
-    DynamicJsonDocument json_doc(JSON_SMALL_STATIC_MSG_BUFFER);
+    JsonDocument json_doc;
     JsonObject ret = json_doc.to<JsonObject>();
 
     uint16_t factor;
@@ -690,9 +691,9 @@ void applySettings(AsyncWebServerRequest *request, JsonObject &errorsObj)
 void post_api_save(AsyncWebServerRequest *request)
 {
     LOG_INFO(F("POST ") << request->url());
-    DynamicJsonDocument json_doc(JSON_DYNAMIC_MSG_BUFFER);
+    JsonDocument json_doc;
     JsonObject ret = json_doc.to<JsonObject>();
-    JsonObject errorsObj = ret.createNestedObject("errors");
+    JsonObject errorsObj = ret[F("errors")].to<JsonObject>();
 
     applySettings(request, errorsObj);
 
@@ -707,9 +708,9 @@ void post_api_save(AsyncWebServerRequest *request)
 void post_api_save_input_type(AsyncWebServerRequest *request)
 {
     LOG_INFO(F("POST ") << request->url());
-    DynamicJsonDocument json_doc(JSON_DYNAMIC_MSG_BUFFER);
+    JsonDocument json_doc;
     JsonObject ret = json_doc.to<JsonObject>();
-    JsonObject errorsObj = ret.createNestedObject("errors");
+    JsonObject errorsObj = ret[F("errors")].to<JsonObject>();
 
     uint8_t input = get_param_uint8(request, FPSTR(PARAM_INPUT));
     //applySettings(request, errorsObj); ? нужно ли тут
@@ -770,7 +771,7 @@ void post_api_reset(AsyncWebServerRequest *request)
 {
     LOG_INFO(F("POST ") << request->url());
 
-    DynamicJsonDocument json_doc(JSON_SMALL_STATIC_MSG_BUFFER);
+    JsonDocument json_doc;
     JsonObject ret = json_doc.to<JsonObject>();
 
     ret[F("redirect")] = F("/");
