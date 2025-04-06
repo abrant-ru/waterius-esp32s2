@@ -29,7 +29,4 @@ endif()
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 
-include_directories(src/usb)
-include_directories(.pio/libdeps/esp32s2/TinyUSB/src)
-
 project(waterius-esp32)
