@@ -101,7 +101,6 @@ void loop()
 		autoprint("input %u\r\n", board.input);
     	if (board.button_time) 
             autoprint("button %u\r\n", board.button_time);
-		update_config(sett);
 	}
 
     //autoprint("mode %u\r\n", mode);
@@ -119,6 +118,7 @@ void loop()
             wifi_shutdown();
             
             ulp_event = ulp_event_t::NONE;
+            LOG_INFO(F("mode set NONE"));
             
             //autoprint("Restart ESP");
             //ESP.restart();
@@ -196,24 +196,17 @@ void loop()
 
             update_config(sett);
 
-            /*if (!masterI2C.setWakeUpPeriod(sett.set_wakeup))
-            {
-                LOG_ERROR(F("Wakeup period wasn't set"));
-            }
-            else // Разбуди меня через...
-            {
-                LOG_INFO(F("Wakeup period, min:") << sett.wakeup_per_min);
-                LOG_INFO(F("Wakeup period (adjusted), min:") << sett.set_wakeup);
-            }*/
+            LOG_INFO(F("Wakeup period, min:") << sett.wakeup_per_min);
+            LOG_INFO(F("Wakeup period (adjusted), min:") << sett.set_wakeup);
 
             store_config(sett);
         }
         
-        ulp_event == ulp_event_t::NONE; // обработали всё
+        ulp_event = ulp_event_t::NONE; // обработали всё
         LOG_INFO(F("mode set NONE"));
     } 
 
-    if (sett.mode == NONE_MODE)
+    if (ulp_event == ulp_event_t::NONE)
     { 
         // Если задач нету
         if (board.power == power_t::Battery)
