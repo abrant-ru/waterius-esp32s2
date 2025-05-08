@@ -2,3 +2,7 @@
 .pio
 logs/
 managed_components/
+sdkconfig.esp32s2
+*.bin
+*.elf
+*.lock
