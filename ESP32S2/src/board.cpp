@@ -11,7 +11,7 @@
 extern const uint8_t ulp_main_bin_start[] asm("_binary_ulp_main_bin_start");
 extern const uint8_t ulp_main_bin_end[]   asm("_binary_ulp_main_bin_end");
 
-ulp_event_t ulp_event = ulp_event_t::NONE;		// Причина запуска
+ulp_event_t ulp_event = ulp_event_t::NONE;        // Причина запуска
 board_data_t board;
 static const char wakeup_text[][16] = { "Undefined", "All", "Ext0", "Ext1", "Timer", "Touchpad", "ULP", "GPIO", "UART", "WiFi", "CoCPU int", "CoCPU crash", "BT" };
 static const char event_text[][16] = { "None", "Time", "Button short", "Button long", "USB" };
@@ -35,7 +35,7 @@ ulp_event_t get_wakeup_event(void)
 void deep_sleep(void)
 {
     autoprint("Entering deep sleep\r\n");    
-	ESP_ERROR_CHECK( esp_sleep_enable_ulp_wakeup() );
+    ESP_ERROR_CHECK( esp_sleep_enable_ulp_wakeup() );
     esp_sleep_pd_config(ESP_PD_DOMAIN_RTC_PERIPH, ESP_PD_OPTION_ON);
     delay(100);
     esp_deep_sleep_start();    
@@ -61,49 +61,49 @@ void initialize_rtc_pins(void)
 {
     autoprint("Initializing RTC pins\r\n");
 
-	// ULP_BUTTON_IO: input, pull-up
+    // ULP_BUTTON_IO: input, pull-up
     rtc_gpio_init((gpio_num_t)ULP_BUTTON_IO);
     rtc_gpio_set_direction((gpio_num_t)ULP_BUTTON_IO, RTC_GPIO_MODE_INPUT_ONLY);
     rtc_gpio_pulldown_dis((gpio_num_t)ULP_BUTTON_IO);
     rtc_gpio_pullup_en((gpio_num_t)ULP_BUTTON_IO);
     rtc_gpio_hold_en((gpio_num_t)ULP_BUTTON_IO);
 
-	// ULP_PULL_UP: output, no pull-up
+    // ULP_PULL_UP: output, no pull-up
     rtc_gpio_init((gpio_num_t)ULP_PULL_UP);
     rtc_gpio_set_direction((gpio_num_t)ULP_PULL_UP, RTC_GPIO_MODE_OUTPUT_ONLY);
     rtc_gpio_pulldown_dis((gpio_num_t)ULP_PULL_UP);
     rtc_gpio_pullup_dis((gpio_num_t)ULP_PULL_UP);
     rtc_gpio_hold_en((gpio_num_t)ULP_PULL_UP);
 
-	// ULP_PWR: output, no pull-up
+    // ULP_PWR: output, no pull-up
     rtc_gpio_init((gpio_num_t)ULP_PWR);
     rtc_gpio_set_direction((gpio_num_t)ULP_PWR, RTC_GPIO_MODE_OUTPUT_ONLY);
     rtc_gpio_pulldown_dis((gpio_num_t)ULP_PWR);
     rtc_gpio_pullup_dis((gpio_num_t)ULP_PWR);
     rtc_gpio_hold_en((gpio_num_t)ULP_PWR);
 
-	// ULP_CH0_IO: input, no pull-up
+    // ULP_CH0_IO: input, no pull-up
     rtc_gpio_init((gpio_num_t)ULP_CH0_IO);
     rtc_gpio_set_direction((gpio_num_t)ULP_CH0_IO, RTC_GPIO_MODE_INPUT_ONLY);
     rtc_gpio_pulldown_dis((gpio_num_t)ULP_CH0_IO);
     rtc_gpio_pullup_dis((gpio_num_t)ULP_CH0_IO);
     rtc_gpio_hold_en((gpio_num_t)ULP_CH0_IO);
 
-	// ULP_CH1_IO: input, no pull-up
+    // ULP_CH1_IO: input, no pull-up
     rtc_gpio_init((gpio_num_t)ULP_CH1_IO);
     rtc_gpio_set_direction((gpio_num_t)ULP_CH1_IO, RTC_GPIO_MODE_INPUT_ONLY);
     rtc_gpio_pulldown_dis((gpio_num_t)ULP_CH1_IO);
     rtc_gpio_pullup_dis((gpio_num_t)ULP_CH1_IO);
     rtc_gpio_hold_en((gpio_num_t)ULP_CH1_IO);
 
-	// ULP_CH0_LED: output, no pull-up
+    // ULP_CH0_LED: output, no pull-up
     rtc_gpio_init((gpio_num_t)ULP_CH0_LED);
     rtc_gpio_set_direction((gpio_num_t)ULP_CH0_LED, RTC_GPIO_MODE_OUTPUT_ONLY);
     rtc_gpio_pulldown_dis((gpio_num_t)ULP_CH0_LED);
     rtc_gpio_pullup_dis((gpio_num_t)ULP_CH0_LED);
     rtc_gpio_hold_en((gpio_num_t)ULP_CH0_LED);
 
-	// ULP_CH1_LED: output, no pull-up
+    // ULP_CH1_LED: output, no pull-up
     rtc_gpio_init((gpio_num_t)ULP_CH1_LED);
     rtc_gpio_set_direction((gpio_num_t)ULP_CH1_LED, RTC_GPIO_MODE_OUTPUT_ONLY);
     rtc_gpio_pulldown_dis((gpio_num_t)ULP_CH1_LED);
@@ -153,20 +153,20 @@ void init_ulp_program(void)
     ulp_wake_up_counter = 0;
     ulp_wake_up_period = 120 * ULP_WAKEUP_PERIOD_SEC;
 
-	board.set_counter_type_0(sett.counter_type0);
+    board.set_counter_type_0(sett.counter_type0);
     board.ch0.pulse_count = sett.impulses0_previous & UINT16_MAX;
-	ulp_ch0_pulse_count = board.ch0.pulse_count;
-   	autoprint("Counter 0: %s, %lu\r\n", input_text[board.ch0.type], sett.impulses0_previous);
+    ulp_ch0_pulse_count = board.ch0.pulse_count;
+       autoprint("Counter 0: %s, %lu\r\n", input_text[board.ch0.type], sett.impulses0_previous);
 
-	board.set_counter_type_1(sett.counter_type1);
+    board.set_counter_type_1(sett.counter_type1);
     board.ch1.pulse_count = sett.impulses1_previous & UINT16_MAX;
-	ulp_ch1_pulse_count = board.ch1.pulse_count;
-   	autoprint("Counter 1: %s, %lu\r\n", input_text[board.ch1.type], sett.impulses1_previous);
+    ulp_ch1_pulse_count = board.ch1.pulse_count;
+       autoprint("Counter 1: %s, %lu\r\n", input_text[board.ch1.type], sett.impulses1_previous);
 
-	ulp_use_led = 1;
-	ulp_use_out = 1;
+    ulp_use_led = 1;
+    ulp_use_out = 1;
 
-	// Init ADC, 13 bit, voltage divider set to 2 times
+    // Init ADC, 13 bit, voltage divider set to 2 times
     ulp_adc_cfg_t cfg_1 = {
         .adc_n    = ADC_UNIT_1,
         .channel  = (adc_channel_t)ULP_BATTERY_ADC,
@@ -195,14 +195,14 @@ void init_ulp_program(void)
     err = ulp_run(&ulp_entry - RTC_SLOW_MEM);
     ESP_ERROR_CHECK(err);
 
-	// Устанавливаем обработчик прерывания
-	ulp_isr_register(ulp_irq, nullptr);
+    // Устанавливаем обработчик прерывания
+    ulp_isr_register(ulp_irq, nullptr);
 }
 
 //=====================================================================================
 bool board_data_t::read()
 {
-	version = 25;
+    version = 25;
 
     config.use_led = ulp_use_led ? true : false;
     config.use_out = ulp_use_out ? true : false;
@@ -211,85 +211,85 @@ bool board_data_t::read()
     ch0.type = ulp_ch0_type & UINT16_MAX;
     ch0.pulse_count = ulp_ch0_pulse_count & UINT16_MAX;
     ch0.adc_value = ulp_ch0_adc_value & UINT16_MAX;
-	if ((sett.impulses0_previous & UINT16_MAX) > ch0.pulse_count) {
-		impulses0 = (((sett.impulses0_previous >> 16) + 1) << 16) + ch0.pulse_count;
-	} else {
-		impulses0 = (sett.impulses0_previous & ((uint32_t)UINT16_MAX << 16)) + ch0.pulse_count;
-	}
+    if ((sett.impulses0_previous & UINT16_MAX) > ch0.pulse_count) {
+        impulses0 = (((sett.impulses0_previous >> 16) + 1) << 16) + ch0.pulse_count;
+    } else {
+        impulses0 = (sett.impulses0_previous & ((uint32_t)UINT16_MAX << 16)) + ch0.pulse_count;
+    }
 
     ch1.type = ulp_ch1_type & UINT16_MAX;
     ch1.pulse_count = ulp_ch1_pulse_count & UINT16_MAX;
     ch1.adc_value = ulp_ch1_adc_value & UINT16_MAX;
-	if ((sett.impulses1_previous & UINT16_MAX) > ch1.pulse_count) {
-		impulses1 = (((sett.impulses1_previous >> 16) + 1) << 16) + ch1.pulse_count;
-	} else {
-		impulses1 = (sett.impulses1_previous & ((uint32_t)UINT16_MAX << 16)) + ch1.pulse_count;
-	}
+    if ((sett.impulses1_previous & UINT16_MAX) > ch1.pulse_count) {
+        impulses1 = (((sett.impulses1_previous >> 16) + 1) << 16) + ch1.pulse_count;
+    } else {
+        impulses1 = (sett.impulses1_previous & ((uint32_t)UINT16_MAX << 16)) + ch1.pulse_count;
+    }
 
-	power = gpio_get_level(BATT_EN) ? power_t::Battery : power_t::USB;
+    power = gpio_get_level(BATT_EN) ? power_t::Battery : power_t::USB;
     usb_connected = USBSerial;
     battery_voltage = ULP_ADC_VOLTAGE(ulp_battery_adc_value & UINT16_MAX);
     wake_up_counter = ulp_wake_up_counter & UINT16_MAX;
     wake_up_period = ulp_wake_up_period & UINT16_MAX;
-	button_time = ulp_button_counter & UINT16_MAX;
-	input = ulp_input & UINT16_MAX;
+    button_time = ulp_button_counter & UINT16_MAX;
+    input = ulp_input & UINT16_MAX;
 
-	return true;
+    return true;
 }
 
 //=====================================================================================
 bool board_data_t::set_counter_type_0(const uint8_t type0)
 {
-	bool result = true;
+    bool result = true;
 
-	if (type0 == NAMUR) {
-		ch0.type = (uint16_t)ulp_channel_type_t::Analog;
-	} else if ((type0 == DISCRETE) || (type0 == HALL)) {
-		ch0.type = (uint16_t)ulp_channel_type_t::Discrete;
-	} else if (type0 == NONE) {
-		ch0.type = (uint16_t)ulp_channel_type_t::Disabled;
-	} else {
-		ch0.type = (uint16_t)ulp_channel_type_t::Disabled;
-		result = false;
-	}
-	ulp_ch0_type = ch0.type;
+    if (type0 == NAMUR) {
+        ch0.type = (uint16_t)ulp_channel_type_t::Analog;
+    } else if ((type0 == DISCRETE) || (type0 == HALL)) {
+        ch0.type = (uint16_t)ulp_channel_type_t::Discrete;
+    } else if (type0 == NONE) {
+        ch0.type = (uint16_t)ulp_channel_type_t::Disabled;
+    } else {
+        ch0.type = (uint16_t)ulp_channel_type_t::Disabled;
+        result = false;
+    }
+    ulp_ch0_type = ch0.type;
 
-	return result;
+    return result;
 }
 
 //=====================================================================================
 bool board_data_t::set_counter_type_1(const uint8_t type1)
 {
-	bool result = true;
+    bool result = true;
 
-	if (type1 == NAMUR) {
-		ch1.type = (uint16_t)ulp_channel_type_t::Analog;
-	} else if ((type1 == DISCRETE) || (type1 == HALL)) {
-		ch1.type = (uint16_t)ulp_channel_type_t::Discrete;
-	} else if (type1 == NONE) {
-		ch1.type = (uint16_t)ulp_channel_type_t::Disabled;
-	} else {
-		ch1.type = (uint16_t)ulp_channel_type_t::Disabled;
-		result = false;
-	}
-	ulp_ch1_type = ch1.type;
+    if (type1 == NAMUR) {
+        ch1.type = (uint16_t)ulp_channel_type_t::Analog;
+    } else if ((type1 == DISCRETE) || (type1 == HALL)) {
+        ch1.type = (uint16_t)ulp_channel_type_t::Discrete;
+    } else if (type1 == NONE) {
+        ch1.type = (uint16_t)ulp_channel_type_t::Disabled;
+    } else {
+        ch1.type = (uint16_t)ulp_channel_type_t::Disabled;
+        result = false;
+    }
+    ulp_ch1_type = ch1.type;
 
-	return result;
+    return result;
 }
 
 //=====================================================================================
 size_t autoprint(const char *format, ...)
 {
-	va_list arg;
-	size_t result = 0;
-	va_start(arg, format);
-	bool usb_connected = USBSerial;
-	if (usb_connected) 		
-		result = USBSerial.vprintf(format, arg);
-	else
-		result = Serial0.vprintf(format, arg);
-  	va_end(arg);
-  	return result;
+    va_list arg;
+    size_t result = 0;
+    va_start(arg, format);
+    bool usb_connected = USBSerial;
+    if (usb_connected)         
+        result = USBSerial.vprintf(format, arg);
+    else
+        result = Serial0.vprintf(format, arg);
+      va_end(arg);
+      return result;
 }
 
 //=====================================================================================
@@ -298,7 +298,7 @@ extern "C" {
 #endif
 int board_usb_get_serial(char* buf, int length)
 {
-	return snprintf(buf, length, "1234");
+    return snprintf(buf, length, "1234");
 }
 #ifdef __cplusplus
 }

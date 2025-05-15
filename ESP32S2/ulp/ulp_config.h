@@ -5,31 +5,31 @@
 #define ULP_BATTERY_IO          9   // Battery voltage GPIO number
 #define ULP_BATTERY_ADC         8   // ADC_CHANNEL_8, GPIO9 on ESP32-S2
 #define ULP_BATT_EN_IO          12  // Battery enable GPIO number
-#define ULP_BUTTON_IO			11  // Button GPIO number
+#define ULP_BUTTON_IO           11  // Button GPIO number
 
 #define ULP_PULL_UP             8   // Pull-up GPIO number
-#define ULP_PWR             	7   // Power GPIO number
+#define ULP_PWR                 7   // Power GPIO number
 
 #define ULP_CH0_IO              3   // CH0 GPIO number
 #define ULP_CH0_ADC_CHANNEL     2   // ADC_CHANNEL_2, GPIO3 on ESP32-S2
 #define ULP_CH0_LED             10  // CH0 LED GPIO number
-#define ULP_CH0_OUT             2	// CH0 Output relay&LED GPIO number
+#define ULP_CH0_OUT             2    // CH0 Output relay&LED GPIO number
 
 #define ULP_CH1_IO              5   // CH1 GPIO number
 #define ULP_CH1_ADC_CHANNEL     4   // ADC_CHANNEL_6, GPIO7 on ESP32-S2
-#define ULP_CH1_LED             6	// CH1 LED GPIO number
-#define ULP_CH1_OUT             1	// CH1 Output relay&LED GPIO number
+#define ULP_CH1_LED             6    // CH1 LED GPIO number
+#define ULP_CH1_OUT             1    // CH1 Output relay&LED GPIO number
 
 #define ULP_WAKEUP_PERIOD       100000  // ULP wake up period 100ms
-#define ULP_WAKEUP_PERIOD_SEC	(1000000 / ULP_WAKEUP_PERIOD)
+#define ULP_WAKEUP_PERIOD_SEC   (1000000 / ULP_WAKEUP_PERIOD)
 #define ULP_BEBOUNCE_MAX_COUNT  3       // Value to which debounce_counter gets rese
 
-#define ULP_ADC_ATTEN			ADC_ATTEN_DB_6
-#define ULP_ADC_AREF			(1500 * 4)
-#define ULP_ADC_MAX				0x1FFF
+#define ULP_ADC_ATTEN           ADC_ATTEN_DB_6
+#define ULP_ADC_AREF            (1500 * 4)
+#define ULP_ADC_MAX             0x1FFF
 #define ULP_ADC_VOLTAGE(x)      ((x) * ULP_ADC_AREF / ULP_ADC_MAX)
-#define ULP_BATTERY_R_HIGH		470
-#define ULP_BATTERY_R_LOW		160
+#define ULP_BATTERY_R_HIGH      470
+#define ULP_BATTERY_R_LOW       160
 #define ULP_BATTERY_RATIO       ((ULP_BATTERY_R_HIGH + ULP_BATTERY_R_LOW) / ULP_BATTERY_R_LOW)
 
 /*

@@ -19,20 +19,20 @@
 #include "active_point_api.h"
 #include "active_point.h"
 
-#define SETUP_TIME_SEC 			600UL // На какое время Attiny включает ESP (файл Attiny85\src\Setup.h)
-#define AP_TASK_STACK_SIZE		(8*1024)
-#define AP_TASK_PRIORITY		10
+#define SETUP_TIME_SEC             600UL // На какое время Attiny включает ESP (файл Attiny85\src\Setup.h)
+#define AP_TASK_STACK_SIZE        (8*1024)
+#define AP_TASK_PRIORITY        10
 
 
 static active_point_state_t active_point_state = active_point_state_t::Idle;
-static AsyncWebServer*	server = NULL;
-static DNSServer*		dns = NULL;
-static TaskHandle_t		task_handle = NULL;
-static unsigned long	start_timestamp = 0;
-bool 					exit_portal_flag = false;
-bool 					start_connect_flag = false;
-bool 					factory_reset_flag = false;
-wl_status_t 			wifi_connect_status = WL_DISCONNECTED;
+static AsyncWebServer*    server = NULL;
+static DNSServer*        dns = NULL;
+static TaskHandle_t        task_handle = NULL;
+static unsigned long    start_timestamp = 0;
+bool                     exit_portal_flag = false;
+bool                     start_connect_flag = false;
+bool                     factory_reset_flag = false;
+wl_status_t             wifi_connect_status = WL_DISCONNECTED;
 
 const String localIPURL = "http://192.168.4.1";
 
@@ -315,7 +315,7 @@ void on_root(AsyncWebServerRequest *request)
     LOG_INFO(F("on_root GET ") << request->url());
 
     LOG_INFO(F("WIFI: wifi_connect_status=") << (int)wifi_connect_status);
-	delay(50);
+    delay(50);
 
     if (sett.factor1 == AUTO_IMPULSE_FACTOR)
     {
@@ -571,88 +571,88 @@ bool setup_active_point()
     LOG_INFO(F("Start scan Wi-Fi networks"));
     WiFi.scanNetworks(true);
 
-	return true;
+    return true;
 }
 
 static void ap_task(void* pvParameters)
 {
-	esp_task_wdt_config_t twdt_config = {
+    esp_task_wdt_config_t twdt_config = {
         .timeout_ms = 3000,
         .idle_core_mask = (1 << CONFIG_SOC_CPU_CORES_NUM) - 1,    // Bitmask of all cores
         .trigger_panic = false,
     };
     ESP_ERROR_CHECK(esp_task_wdt_reconfigure (&twdt_config));
 
-	active_point_state = active_point_state_t::Start;
-	if (setup_active_point()) {
-		active_point_state = active_point_state_t::Run;
-		start_timestamp = millis();
-	} else {
-		active_point_state = active_point_state_t::Error;
-	}
+    active_point_state = active_point_state_t::Start;
+    if (setup_active_point()) {
+        active_point_state = active_point_state_t::Run;
+        start_timestamp = millis();
+    } else {
+        active_point_state = active_point_state_t::Error;
+    }
 
-	while (active_point_state == active_point_state_t::Run) {
-		dns->processNextRequest();
-		if (start_connect_flag)	{
-			wifi_connect(sett, WIFI_AP_STA);
-			wifi_connect_status = WiFi.status();
-			start_connect_flag = false;
-		}
-		if (factory_reset_flag)	{
-			factory_reset(sett);
-		}
-		if (exit_portal_flag) {
-			active_point_state = active_point_state_t::Stop;
-		}
-		if (((millis() - start_timestamp) / 1000) > SETUP_TIME_SEC)	{
-			LOG_ERROR(F("Portal setup time is over"));
-			active_point_state = active_point_state_t::Stop;
-		}
+    while (active_point_state == active_point_state_t::Run) {
+        dns->processNextRequest();
+        if (start_connect_flag)    {
+            wifi_connect(sett, WIFI_AP_STA);
+            wifi_connect_status = WiFi.status();
+            start_connect_flag = false;
+        }
+        if (factory_reset_flag)    {
+            factory_reset(sett);
+        }
+        if (exit_portal_flag) {
+            active_point_state = active_point_state_t::Stop;
+        }
+        if (((millis() - start_timestamp) / 1000) > SETUP_TIME_SEC)    {
+            LOG_ERROR(F("Portal setup time is over"));
+            active_point_state = active_point_state_t::Stop;
+        }
 
-		vTaskDelay(pdMS_TO_TICKS(50));
-	}
+        vTaskDelay(pdMS_TO_TICKS(50));
+    }
 
-	if (active_point_state == active_point_state_t::Stop) {
-		LOG_INFO(F("Shutdown HTTP and DNS servers"));
-		server->end();
-		dns->stop();
-		delete server;
-		delete dns;
-		active_point_state = active_point_state_t::Finish;
-	}
+    if (active_point_state == active_point_state_t::Stop) {
+        LOG_INFO(F("Shutdown HTTP and DNS servers"));
+        server->end();
+        dns->stop();
+        delete server;
+        delete dns;
+        active_point_state = active_point_state_t::Finish;
+    }
 
     vTaskDelete(NULL);
 }
 
 int start_active_point()
 {
-	if (active_point_state != active_point_state_t::Idle)
-		return ESP_ERR_INVALID_STATE;
-	// Создаем поток AP
+    if (active_point_state != active_point_state_t::Idle)
+        return ESP_ERR_INVALID_STATE;
+    // Создаем поток AP
     BaseType_t err = xTaskCreate(
-		ap_task,
-		"active point",
-		AP_TASK_STACK_SIZE,
-		0,
-		AP_TASK_PRIORITY,
-		&task_handle);
+        ap_task,
+        "active point",
+        AP_TASK_STACK_SIZE,
+        0,
+        AP_TASK_PRIORITY,
+        &task_handle);
 
-	if (err != pdTRUE) {
-		active_point_state = active_point_state_t::Error;
-		LOG_ERROR(F("Starting AP task failed"));
-		return ESP_ERR_INVALID_RESPONSE;
-	}
+    if (err != pdTRUE) {
+        active_point_state = active_point_state_t::Error;
+        LOG_ERROR(F("Starting AP task failed"));
+        return ESP_ERR_INVALID_RESPONSE;
+    }
 
     return ESP_OK;
 }
 
 active_point_state_t active_point()
 {
-	if (active_point_state == active_point_state_t::Idle) {
+    if (active_point_state == active_point_state_t::Idle) {
         start_active_point();
     }
     if (active_point_state == active_point_state_t::Finish) {
-		task_handle = NULL;
-	}
-	return active_point_state;
+        task_handle = NULL;
+    }
+    return active_point_state;
 }

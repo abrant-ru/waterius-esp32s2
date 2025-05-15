@@ -40,8 +40,8 @@ bool init_config(Settings &sett)
     
     sett.counter0_name = CounterName::WATER_HOT;
     sett.counter1_name = CounterName::WATER_COLD;
-	sett.impulses0_previous = 0;
-	sett.impulses1_previous = 0;
+    sett.impulses0_previous = 0;
+    sett.impulses1_previous = 0;
 
     sett.factor0 = AS_COLD_CHANNEL;
     sett.factor1 = AUTO_IMPULSE_FACTOR;
@@ -111,7 +111,7 @@ bool init_config(Settings &sett)
 
     LOG_INFO(F("Generate waterius key"));
     generateToken(sett.waterius_key, WATERIUS_KEY_LEN);
-	//strncpy0(sett.waterius_key, "4e8212f9711d9759baa829c10ccftu6c7", 34);  
+    //strncpy0(sett.waterius_key, "4e8212f9711d9759baa829c10ccftu6c7", 34);  
     LOG_INFO(F("waterius key=") << sett.waterius_key);
 
 #ifdef WIFI_SSID

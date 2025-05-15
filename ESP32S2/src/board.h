@@ -9,11 +9,11 @@
 #include "driver/gpio.h"
 #include "driver/rtc_io.h"
 
-#define LED_S2			(gpio_num_t)15
-#define LED_STATE		GPIO_NUM_35
-#define BATT_VOL		GPIO_NUM_9
-#define BATT_VOL_ADC	ADC_CHANNEL_8
-#define BATT_EN			GPIO_NUM_12
+#define LED_S2          (gpio_num_t)15
+#define LED_STATE       GPIO_NUM_35
+#define BATT_VOL        GPIO_NUM_9
+#define BATT_VOL_ADC    ADC_CHANNEL_8
+#define BATT_EN         GPIO_NUM_12
 
 enum class power_t {
     Battery         = 0,
@@ -24,14 +24,14 @@ enum class ulp_event_t {
     NONE            = 0,
     TIME            = 1,
     BUTTON_SHORT    = 2,
-    BUTTON_LONG    	= 3,
+    BUTTON_LONG        = 3,
     USB             = 4,
 };
 
 struct ulp_config_t {
     bool            use_led;
     bool            use_out;
-    unsigned int	debounce_max_count;
+    unsigned int    debounce_max_count;
 };
 
 enum class ulp_channel_type_t {
@@ -43,26 +43,26 @@ enum class ulp_channel_type_t {
 struct ulp_channel_t {
     uint16_t        type;  // ulp_channel_type_t
     uint16_t        pulse_count;
-    unsigned int	adc_value;
+    unsigned int    adc_value;
 };
 
 struct board_data_t {
-    uint8_t version;    				// Версия ПО
-    ulp_config_t    config;				// Настройка режимов ULP
+    uint8_t version;                    // Версия ПО
+    ulp_config_t    config;                // Настройка режимов ULP
     ulp_channel_t   ch0;
     ulp_channel_t   ch1;
-	uint32_t		impulses0;
-	uint32_t		impulses1;
-	power_t			power;
-	bool			usb_connected;
+    uint32_t        impulses0;
+    uint32_t        impulses1;
+    power_t            power;
+    bool            usb_connected;
     unsigned int    battery_voltage;
-    unsigned int	wake_up_counter;
-    unsigned int	wake_up_period;
-	unsigned int	button_time;
-	unsigned int	input;				// Входа GPIO, обработываемые ulp
-	bool			read();
-	bool			set_counter_type_0(const uint8_t type0);
-	bool			set_counter_type_1(const uint8_t type1);
+    unsigned int    wake_up_counter;
+    unsigned int    wake_up_period;
+    unsigned int    button_time;
+    unsigned int    input;                // Входа GPIO, обработываемые ulp
+    bool            read();
+    bool            set_counter_type_0(const uint8_t type0);
+    bool            set_counter_type_1(const uint8_t type1);
 };
 
 struct SlaveData

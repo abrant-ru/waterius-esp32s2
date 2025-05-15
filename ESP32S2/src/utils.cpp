@@ -21,8 +21,8 @@
  */
 String get_device_name()
 {
-	String deviceName = String(BRAND_NAME) + "-" + getChipId();
-	return deviceName;
+    String deviceName = String(BRAND_NAME) + "-" + getChipId();
+    return deviceName;
 }
 
 /**
@@ -35,7 +35,7 @@ String get_device_name()
 
 String get_ap_name()
 {
-	return get_device_name() + "-" + String(FIRMWARE_VERSION);
+    return get_device_name() + "-" + String(FIRMWARE_VERSION);
 }
 
 /**
@@ -45,11 +45,11 @@ String get_ap_name()
  */
 String get_mac_address_hex()
 {
-	uint8_t baseMac[6];
-	char baseMacChr[13] = {0};
-	WiFi.macAddress(baseMac);
-	sprintf(baseMacChr, MAC_STR_HEX, baseMac[0], baseMac[1], baseMac[2], baseMac[3], baseMac[4], baseMac[5]);
-	return String(baseMacChr);
+    uint8_t baseMac[6];
+    char baseMacChr[13] = {0};
+    WiFi.macAddress(baseMac);
+    sprintf(baseMacChr, MAC_STR_HEX, baseMac[0], baseMac[1], baseMac[2], baseMac[3], baseMac[4], baseMac[5]);
+    return String(baseMacChr);
 }
 
 /**
@@ -60,27 +60,27 @@ String get_mac_address_hex()
  */
 uint16_t get_checksum(const Settings &sett)
 {
-	uint8_t *buf = (uint8_t *)&sett;
-	uint16_t crc = 0xffff, poly = 0xa001;
-	uint16_t i = 0;
-	uint16_t len = sizeof(sett) - 2;
+    uint8_t *buf = (uint8_t *)&sett;
+    uint16_t crc = 0xffff, poly = 0xa001;
+    uint16_t i = 0;
+    uint16_t len = sizeof(sett) - 2;
 
-	for (i = 0; i < len; i++)
-	{
-		crc ^= buf[i];
-		for (uint8_t j = 0; j < 8; j++)
-		{
-			if (crc & 0x01)
-			{
-				crc >>= 1;
-				crc ^= poly;
-			}
-			else
-				crc >>= 1;
-		}
-	}
-	LOG_INFO(F("get_checksum crc=") << crc);
-	return crc;
+    for (i = 0; i < len; i++)
+    {
+        crc ^= buf[i];
+        for (uint8_t j = 0; j < 8; j++)
+        {
+            if (crc & 0x01)
+            {
+                crc >>= 1;
+                crc ^= poly;
+            }
+            else
+                crc >>= 1;
+        }
+    }
+    LOG_INFO(F("get_checksum crc=") << crc);
+    return crc;
 }
 
 /**
@@ -91,14 +91,14 @@ uint16_t get_checksum(const Settings &sett)
  */
 String get_proto(const String &url)
 {
-	String proto = "";
-	int index = url.indexOf(':');
-	if (index > 0)
-	{
-		proto = url.substring(0, index);
-		proto.toLowerCase();
-	}
-	return proto;
+    String proto = "";
+    int index = url.indexOf(':');
+    if (index > 0)
+    {
+        proto = url.substring(0, index);
+        proto.toLowerCase();
+    }
+    return proto;
 }
 
 /**
@@ -111,12 +111,12 @@ String get_proto(const String &url)
  */
 extern bool is_https(const char *url)
 {
-	if (url[0])
-	{
-		String urlStr = String(url);
-		return get_proto(urlStr) == PROTO_HTTPS;
-	}
-	return false;
+    if (url[0])
+    {
+        String urlStr = String(url);
+        return get_proto(urlStr) == PROTO_HTTPS;
+    }
+    return false;
 }
 
 /**
@@ -126,10 +126,10 @@ extern bool is_https(const char *url)
  */
 void remove_trailing_slash(String &topic)
 {
-	if (topic.endsWith(F("/")))
-	{
-		topic.remove(topic.length() - 1);
-	}
+    if (topic.endsWith(F("/")))
+    {
+        topic.remove(topic.length() - 1);
+    }
 }
 
 /**
@@ -141,7 +141,7 @@ void remove_trailing_slash(String &topic)
  */
 bool is_waterius_site(const Settings &sett)
 {
-	return sett.waterius_on && sett.waterius_host[0] && sett.waterius_key[0];
+    return sett.waterius_on && sett.waterius_host[0] && sett.waterius_key[0];
 }
 
 
@@ -154,7 +154,7 @@ bool is_waterius_site(const Settings &sett)
  */
 bool is_http(const Settings &sett)
 {
-	return sett.http_on && sett.http_url[0];
+    return sett.http_on && sett.http_url[0];
 }
 
 
@@ -168,9 +168,9 @@ bool is_http(const Settings &sett)
 bool is_mqtt(const Settings &sett)
 {
 #ifndef MQTT_DISABLED
-	return sett.mqtt_on && sett.mqtt_host[0];
+    return sett.mqtt_on && sett.mqtt_host[0];
 #else
-	return false;
+    return false;
 #endif
 }
 
@@ -184,9 +184,9 @@ bool is_mqtt(const Settings &sett)
 bool is_ha(const Settings &sett)
 {
 #ifndef MQTT_DISABLED
-	return is_mqtt(sett) && sett.mqtt_auto_discovery;
+    return is_mqtt(sett) && sett.mqtt_auto_discovery;
 #else
-	return false;
+    return false;
 #endif
 }
 
@@ -200,7 +200,7 @@ bool is_ha(const Settings &sett)
 
 bool is_dhcp(const Settings &sett)
 {
-	return sett.dhcp_off == 0;
+    return sett.dhcp_off == 0;
 }
 
 /**
@@ -209,57 +209,57 @@ bool is_dhcp(const Settings &sett)
  */
 void log_system_info()
 {
-	// System info
-	LOG_INFO(F("------------ System Info ------------"));
-	LOG_INFO(F("Firmware ver: ") << String(FIRMWARE_VERSION));
-	LOG_INFO(F("Sketch Size: ") << ESP.getSketchSize());
-	LOG_INFO(F("Free Sketch Space: ") << ESP.getFreeSketchSpace());
-	LOG_INFO(F("Free memory: ") << ESP.getFreeHeap());
-	LOG_INFO(F("Settings size: ") << sizeof(Settings));
-	LOG_INFO(F("------------ WiFi Info ------------"));
-	LOG_INFO(F("WIFI: SSID: ") << WiFi.SSID());
-	LOG_INFO(F("WIFI: BSID: ") << WiFi.BSSIDstr());
-	LOG_INFO(F("WIFI: Channel: ") << WiFi.channel());
+    // System info
+    LOG_INFO(F("------------ System Info ------------"));
+    LOG_INFO(F("Firmware ver: ") << String(FIRMWARE_VERSION));
+    LOG_INFO(F("Sketch Size: ") << ESP.getSketchSize());
+    LOG_INFO(F("Free Sketch Space: ") << ESP.getFreeSketchSpace());
+    LOG_INFO(F("Free memory: ") << ESP.getFreeHeap());
+    LOG_INFO(F("Settings size: ") << sizeof(Settings));
+    LOG_INFO(F("------------ WiFi Info ------------"));
+    LOG_INFO(F("WIFI: SSID: ") << WiFi.SSID());
+    LOG_INFO(F("WIFI: BSID: ") << WiFi.BSSIDstr());
+    LOG_INFO(F("WIFI: Channel: ") << WiFi.channel());
 #ifdef ESP8266
 //TODO
-	LOG_INFO(F("WIFI: Mode current: ") << wifi_phy_mode_title(WiFi.getPhyMode()));
+    LOG_INFO(F("WIFI: Mode current: ") << wifi_phy_mode_title(WiFi.getPhyMode()));
 #endif
-	LOG_INFO(F("WIFI: RSSI: ") << WiFi.RSSI() << F("dBm"));
-	LOG_INFO(F("------------ IP Info ------------"));
-	//TODO LOG_INFO(F("IP: Host name: ") << WiFi.hostname());
-	LOG_INFO(F("IP: IP adress: ") << WiFi.localIP().toString());
-	LOG_INFO(F("IP: Subnet mask: ") << WiFi.subnetMask());
-	LOG_INFO(F("IP: Gateway IP: ") << WiFi.gatewayIP().toString());
-	LOG_INFO(F("IP: DNS IP: ") << WiFi.dnsIP(0).toString());
-	LOG_INFO(F("IP: MAC Address: ") << WiFi.macAddress());
+    LOG_INFO(F("WIFI: RSSI: ") << WiFi.RSSI() << F("dBm"));
+    LOG_INFO(F("------------ IP Info ------------"));
+    //TODO LOG_INFO(F("IP: Host name: ") << WiFi.hostname());
+    LOG_INFO(F("IP: IP adress: ") << WiFi.localIP().toString());
+    LOG_INFO(F("IP: Subnet mask: ") << WiFi.subnetMask());
+    LOG_INFO(F("IP: Gateway IP: ") << WiFi.gatewayIP().toString());
+    LOG_INFO(F("IP: DNS IP: ") << WiFi.dnsIP(0).toString());
+    LOG_INFO(F("IP: MAC Address: ") << WiFi.macAddress());
 }
 
 extern void generateToken(char *token, const int token_len)
 {
-	LOG_INFO(F("Generate Token"));
-	
+    LOG_INFO(F("Generate Token"));
+    
     uint64_t macAddress = ESP.getEfuseMac();
 
-	uint32_t randomValue = esp_random();
+    uint32_t randomValue = esp_random();
     uint64_t uniqueRandom = (uint64_t)randomValue ^ macAddress;
 
-	uint32_t randomValue2 = esp_random();
+    uint32_t randomValue2 = esp_random();
     sprintf(token, "%08x%08x", randomValue, randomValue2);
 
-	LOG_INFO(F("Token: ") << token);
-	LOG_INFO(F("-- END --"));
+    LOG_INFO(F("Token: ") << token);
+    LOG_INFO(F("-- END --"));
 }
 
 void blink_led(int count, int period, int duty)
 {
-	pinMode(LED_PIN, OUTPUT);
-	for (int i = 0; i < count; i++)
-	{
-		digitalWrite(LED_PIN, HIGH);
-		delay(period - duty);
-		digitalWrite(LED_PIN, LOW);
-		delay(duty);
-	}
+    pinMode(LED_PIN, OUTPUT);
+    for (int i = 0; i < count; i++)
+    {
+        digitalWrite(LED_PIN, HIGH);
+        delay(period - duty);
+        digitalWrite(LED_PIN, LOW);
+        delay(duty);
+    }
 }
 
 /**
@@ -270,28 +270,28 @@ void blink_led(int count, int period, int duty)
  */
 DataType data_type_by_name(uint8_t counter_name)
 {
-	switch ((CounterName)counter_name)
-	{
-	case CounterName::WATER_COLD:
-		return DataType::COLD_WATER;
+    switch ((CounterName)counter_name)
+    {
+    case CounterName::WATER_COLD:
+        return DataType::COLD_WATER;
 
-	case CounterName::WATER_HOT:
-		return DataType::HOT_WATER;
+    case CounterName::WATER_HOT:
+        return DataType::HOT_WATER;
 
-	case CounterName::ELECTRO:
-		return DataType::ELECTRICITY;
+    case CounterName::ELECTRO:
+        return DataType::ELECTRICITY;
 
-	case CounterName::GAS:
-		return DataType::GAS_DATA;
+    case CounterName::GAS:
+        return DataType::GAS_DATA;
 
-	case CounterName::HEAT:
-		return DataType::HEATING;
+    case CounterName::HEAT:
+        return DataType::HEATING;
 
-	case CounterName::PORTABLE_WATER:
-		return DataType::POTABLE_WATER;
+    case CounterName::PORTABLE_WATER:
+        return DataType::POTABLE_WATER;
 
-	case CounterName::OTHER:
-		return DataType::OTHER_TYPE;
-	}
-	return DataType::COLD_WATER;
+    case CounterName::OTHER:
+        return DataType::OTHER_TYPE;
+    }
+    return DataType::COLD_WATER;
 }

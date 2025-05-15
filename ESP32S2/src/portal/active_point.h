@@ -15,12 +15,12 @@ class SlaveData;
 class CalculatedData;
 
 enum class active_point_state_t {
-	Idle,
-	Start,
-	Run,
-	Stop,
-	Finish,
-	Error
+    Idle,
+    Start,
+    Run,
+    Stop,
+    Finish,
+    Error
 };
 
 active_point_state_t active_point();

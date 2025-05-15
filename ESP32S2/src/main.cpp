@@ -41,8 +41,8 @@ void setup()
     LOG_INFO(F("Booted"));
     LOG_INFO(F("Build: ") << __DATE__ << F(" ") << __TIME__);
 
-	// Установка пинов
-	initialize_pins();
+    // Установка пинов
+    initialize_pins();
     gpio_set_level(LED_S2, HIGH);
     gpio_set_level(LED_STATE, HIGH);
 
@@ -52,7 +52,7 @@ void setup()
     }
     LOG_INFO(F("FS: LittleFS mounted"));
 
-	// true - загрузили конфиг. false - ошибка памяти или инициализация конфига
+    // true - загрузили конфиг. false - ошибка памяти или инициализация конфига
     config_loaded = load_config(sett);
 
     // Определяем причину запуска
@@ -66,8 +66,8 @@ void setup()
     }
     LOG_INFO(F("mode: ") << sett.mode);
 
-	// Читаем данные
-   	board.read();
+    // Читаем данные
+       board.read();
 
     autoprint("Initializing complete\r\n");
 }
@@ -82,26 +82,26 @@ void setup()
 
 void loop()
 {
-	static unsigned long interval_1s = 0;
-	unsigned long now = millis();
-	unsigned long elapsed = now - interval_1s;
-	if (elapsed > 5000) 
-	{
-		interval_1s = now;
-		// Читаем данные
-    	board.read();
-		// Обновляем светодиоды
-    	gpio_set_level(LED_STATE, 1);
-    	gpio_set_level(LED_S2, (board.power == power_t::USB));
-		// Пишем в консоль состояние
-  		static const char power_text[][16] = { "Battery", "USB" };
-    	static const char usb_text[][16] = { "not connected", "connected" };
-    	autoprint("wake %u/%u, power %s, voltage %u, usb %s\r\n", board.wake_up_counter, board.wake_up_period, power_text[(uint)board.power], board.battery_voltage, usb_text[board.usb_connected]);
-    	autoprint("pulse %u/%u, adc %u/%u\r\n", board.impulses0, board.impulses1, board.ch0.adc_value, board.ch1.adc_value);
-		autoprint("input %u\r\n", board.input);
-    	if (board.button_time) 
+    static unsigned long interval_1s = 0;
+    unsigned long now = millis();
+    unsigned long elapsed = now - interval_1s;
+    if (elapsed > 5000) 
+    {
+        interval_1s = now;
+        // Читаем данные
+        board.read();
+        // Обновляем светодиоды
+        gpio_set_level(LED_STATE, 1);
+        gpio_set_level(LED_S2, (board.power == power_t::USB));
+        // Пишем в консоль состояние
+          static const char power_text[][16] = { "Battery", "USB" };
+        static const char usb_text[][16] = { "not connected", "connected" };
+        autoprint("wake %u/%u, power %s, voltage %u, usb %s\r\n", board.wake_up_counter, board.wake_up_period, power_text[(uint)board.power], board.battery_voltage, usb_text[board.usb_connected]);
+        autoprint("pulse %u/%u, adc %u/%u\r\n", board.impulses0, board.impulses1, board.ch0.adc_value, board.ch1.adc_value);
+        autoprint("input %u\r\n", board.input);
+        if (board.button_time) 
             autoprint("button %u\r\n", board.button_time);
-	}
+    }
 
     //autoprint("mode %u\r\n", mode);
     
