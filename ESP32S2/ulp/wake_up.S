@@ -88,7 +88,7 @@ butt_press:
 	// Button pressed
 	move r2, button_counter				// R2 = @button_counter
 	ld r3, r2, 0						// R3 = button_counter
-	move r1, 200						// R1 = 200 (max duration 20s)
+	move r1, 200						// R1 = 200 (max duration 20s) ULP_WAKEUP_PERIOD
 	sub r0, r1, r3						// R0 = R1 - R3
 	jump check_sleep, OV				// Jump if R1 < R3
 	// Increment counter if value < max
@@ -100,25 +100,25 @@ butt_was_pressed:
 	// Button was pressed, in R3 - duration, in R2 - @button_counter
 	move r1, 0							// R0 = 1
 	st r1, r2, 0						// button_counter = R1
-	move r1, 50							// R1 = 50 (duration 5s)
+	move r1, 50							// R1 = 50 (duration 5s) ULP_WAKEUP_PERIOD
 	sub r0, r1, r3						// R0 = R1 - R3
 	jump wake_up_key_long, OV			// Jump if R1 < R3
 	jump wake_up_key_short
 
 wake_up_time:
-	move r0, 1
+	move r0, 1                          // ulp_event_t::TIME
 	jump wake_up
 
 wake_up_key_short:
-	move r0, 2
+	move r0, 2                          // ulp_event_t::BUTTON_SHORT
 	jump wake_up
 
 wake_up_key_long:
-	move r0, 3
+	move r0, 3                          // ulp_event_t::BUTTON_LONG
 	jump wake_up
 
 wake_up_usb:
-	move r0, 4
+	move r0, 4                          // ulp_event_t::USB
 	jump wake_up
 
 	// End the program

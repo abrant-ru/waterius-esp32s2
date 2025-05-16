@@ -9,7 +9,9 @@
 #include "driver/gpio.h"
 #include "driver/rtc_io.h"
 
-#define LED_S2          (gpio_num_t)15
+#define WAKEUP_PERIOD_SEC 120
+
+#define LED_S2          GPIO_NUM_15
 #define LED_STATE       GPIO_NUM_35
 #define BATT_VOL        GPIO_NUM_9
 #define BATT_VOL_ADC    ADC_CHANNEL_8
@@ -53,7 +55,7 @@ struct board_data_t {
     ulp_channel_t   ch1;
     uint32_t        impulses0;
     uint32_t        impulses1;
-    power_t            power;
+    power_t         power;
     bool            usb_connected;
     unsigned int    battery_voltage;
     unsigned int    wake_up_counter;
