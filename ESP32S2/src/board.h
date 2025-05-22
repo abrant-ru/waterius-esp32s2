@@ -11,11 +11,11 @@
 
 #define WAKEUP_PERIOD_SEC 120
 
-#define LED_S2          GPIO_NUM_15
+#define LED_S2          GPIO_NUM_2
 #define LED_STATE       GPIO_NUM_35
 #define BATT_VOL        GPIO_NUM_9
 #define BATT_VOL_ADC    ADC_CHANNEL_8
-#define BATT_EN         GPIO_NUM_12
+#define BATT_EN         GPIO_NUM_10
 
 enum class power_t {
     Battery         = 0,
